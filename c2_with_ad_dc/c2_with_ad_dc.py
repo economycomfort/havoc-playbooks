@@ -50,7 +50,7 @@ pp = pprint.PrettyPrinter(indent=4)
 
 # Create a config parser and setup config parameters
 config = ConfigParser()
-config.read('c2_with_ad_dc.ini')
+config.read('havoc-playbooks/c2_with_ad_dc/c2_with_ad_dc.ini')
 
 listener_type = config.get('c2_task', 'listener_type')
 listener_profile = config.get('c2_task', 'listener_profile')

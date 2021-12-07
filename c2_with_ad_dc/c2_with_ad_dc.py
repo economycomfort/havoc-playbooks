@@ -66,6 +66,7 @@ user_name = config.get('remote_ad_task', 'user_name')
 user_password = config.get('remote_ad_task', 'user_password')
 admin_password = config.get('remote_ad_task', 'admin_password')
 remote_c2_agent_task_name = config.get('remote_c2_agent_task', 'task_name')
+target_cidr = config.get('remote_c2_agent_task', 'target_cidr')
 command_list = config.get('remote_c2_agent_task', 'command_list')
 
 if listener_profile != 'None':
@@ -415,7 +416,8 @@ for command in command_list.split(', '):
         command = 'whoami'
     # Replace variables in shell_command
     target_insert = re.sub('\$TARGET', target_ip, command)
-    tld_insert = re.sub('\$AD_TLD', ad_tld, target_insert)
+    target_cidr_insert = re.sub('\$TARGET_CIDR', target_cidr, target_insert)
+    tld_insert = re.sub('\$AD_TLD', ad_tld, target_cidr_insert)
     domain_insert = re.sub('\$AD_DOMAIN', ad_domain, tld_insert)
     user_name_insert = re.sub('\$USER_NAME', user_name, domain_insert)
     user_password_insert = re.sub('\$USER_PASSWORD', user_password, user_name_insert)

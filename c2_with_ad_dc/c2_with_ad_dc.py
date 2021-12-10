@@ -66,7 +66,7 @@ user_name = config.get('remote_ad_task', 'user_name')
 user_password = config.get('remote_ad_task', 'user_password')
 admin_password = config.get('remote_ad_task', 'admin_password')
 remote_c2_agent_task_name = config.get('remote_c2_agent_task', 'task_name')
-target_cidr = config.get('remote_c2_agent_task', 'target_cidr')
+target_cidr = config.get('remote_c2_agent_task', 'cidr')
 command_list = config.get('remote_c2_agent_task', 'command_list')
 
 if listener_profile != 'None':

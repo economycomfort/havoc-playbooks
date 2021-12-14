@@ -6,6 +6,10 @@ listener_tls = no
 domain_name = None
 cert_subj = /C=US/ST=Utah/L=Lehi/O=Your Company, Inc./OU=IT/CN=$HOST
 
+[exfil_task]
+exfil_type = http_get
+exfil_port = 80
+
 [remote_ad_task]
 task_name = remote_trainman_ad
 ad_tld = local

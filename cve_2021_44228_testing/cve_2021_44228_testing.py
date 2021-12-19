@@ -233,7 +233,6 @@ for jv in java_versions:
     instruct_args = {'listen_port': cve_2021_44228_app_target_port, 'java_version': jv}
     instruct_command = 'start_cve_2021_44228_app'
     h.instruct_task(cve_2021_44228_app_task_name, cve_instruct_instance, instruct_command, instruct_args)
-    cve_exists = [cve_2021_44228_app_task_name, cve_instruct_instance]
 
     # Get the start_cve_2021_44228_app command results.
     start_cve_results = get_command_results(cve_2021_44228_app_task_name, instruct_command, cve_instruct_instance)
@@ -242,50 +241,57 @@ for jv in java_versions:
             instruct_command_output = json.loads(cv_result['instruct_command_output'])
             if instruct_command_output['outcome'] == 'success':
                 print(f'\nstart_cve_2021_44228_app with Java version {jv} succeeded.\n')
+                cve_exists = [cve_2021_44228_app_task_name, cve_instruct_instance]
             else:
-                print(f'\nstart_cve_2021_44228_app with Java version {jv} failed... Exiting.\n')
-                clean_up()
+                print(f'\nstart_cve_2021_44228_app with Java version {jv} failed.')
+                print(instruct_command_output['message'])
+                print(f'\nSkipping to next Java version.\n')
 
-    # Ask the exploiter task to execute the exploit against the target IP.
-    print(f'\nInstructing exploiter task {exploiter_task_name} to execute exploit.')
-    new_exec_cmd = re.sub('\$JAVA_VERSION', jv, exploiter_exec_cmd)
-    target_url = f'http://{target_ip}:{cve_2021_44228_app_target_port}'
-    instruct_args = {
-        'target_url': target_url,
-        'http_port': exploiter_http_port,
-        'ldap_port': exploiter_ldap_port,
-        'exec_cmd': new_exec_cmd
-    }
-    instruct_command = 'exploit_cve_2021_44228'
-    h.instruct_task(exploiter_task_name, cve_instruct_instance, instruct_command, instruct_args)
+    # If cve_2021_44228_app started, ask the exploiter task to execute the exploit against the target IP.
+    if cve_exists:
+        print(f'\nInstructing exploiter task {exploiter_task_name} to execute exploit.')
+        new_exec_cmd = re.sub('\$JAVA_VERSION', jv, exploiter_exec_cmd)
+        target_url = f'http://{target_ip}:{cve_2021_44228_app_target_port}'
+        instruct_args = {
+            'target_url': target_url,
+            'http_port': exploiter_http_port,
+            'ldap_port': exploiter_ldap_port,
+            'exec_cmd': new_exec_cmd
+        }
+        instruct_command = 'exploit_cve_2021_44228'
+        h.instruct_task(exploiter_task_name, cve_instruct_instance, instruct_command, instruct_args)
 
-    # Get the exploit_cve_2021_44228 command results.
-    exploit_results = get_command_results(exploiter_task_name, instruct_command, cve_instruct_instance)
-    for ex_result in exploit_results:
-        if ex_result['instruct_command'] == instruct_command and ex_result['instruct_instance'] == cve_instruct_instance:
-            instruct_command_output = json.loads(ex_result['instruct_command_output'])
-            if instruct_command_output['outcome'] == 'success':
-                print(f'\nexploit_cve_2021_44228 on Java version {jv} succeeded.\n')
-                vulnerable_java_versions.append(jv)
-            else:
-                print(f'\nexploit_cve_2021_44228 on Java version {jv} failed.\n')
+        # Get the exploit_cve_2021_44228 command results.
+        exploit_results = get_command_results(exploiter_task_name, instruct_command, cve_instruct_instance)
+        for ex_result in exploit_results:
+            if ex_result['instruct_command'] == instruct_command and \
+                    ex_result['instruct_instance'] == cve_instruct_instance:
+                instruct_command_output = json.loads(ex_result['instruct_command_output'])
+                if instruct_command_output['outcome'] == 'success':
+                    print(f'\nexploit_cve_2021_44228 on Java version {jv} succeeded.\n')
+                    vulnerable_java_versions.append(jv)
+                else:
+                    print(f'\nexploit_cve_2021_44228 on Java version {jv} failed.\n')
 
-    # Ask the cve_2021_44228_app task to stop the vulnerable app.
-    print(f'\nStopping cve-2021-44228 vulnerable application on {cve_2021_44228_app_task_name} with Java version {jv}.')
-    instruct_command = 'stop_cve_2021_44228_app'
-    h.instruct_task(cve_2021_44228_app_task_name, cve_instruct_instance, instruct_command)
-    cve_exists = False
+        # Ask the cve_2021_44228_app task to stop the vulnerable app.
+        print(
+            f'\nStopping cve-2021-44228 vulnerable application on {cve_2021_44228_app_task_name} with Java version {jv}.'
+        )
+        instruct_command = 'stop_cve_2021_44228_app'
+        h.instruct_task(cve_2021_44228_app_task_name, cve_instruct_instance, instruct_command)
+        cve_exists = False
 
-    # Get the stop_cve_2021_44228_app command results.
-    stop_cve_results = get_command_results(cve_2021_44228_app_task_name, instruct_command, cve_instruct_instance)
-    for cv_result in stop_cve_results:
-        if cv_result['instruct_command'] == instruct_command and cv_result['instruct_instance'] == cve_instruct_instance:
-            instruct_command_output = json.loads(cv_result['instruct_command_output'])
-            if instruct_command_output['outcome'] == 'success':
-                print(f'\nstop_cve_2021_44228_app with Java version {jv} succeeded.\n')
-            else:
-                print(f'\nstop_cve_2021_44228_app with Java version {jv} failed... Exiting.\n')
-                clean_up()
+        # Get the stop_cve_2021_44228_app command results.
+        stop_cve_results = get_command_results(cve_2021_44228_app_task_name, instruct_command, cve_instruct_instance)
+        for cv_result in stop_cve_results:
+            if cv_result['instruct_command'] == instruct_command and \
+                    cv_result['instruct_instance'] == cve_instruct_instance:
+                instruct_command_output = json.loads(cv_result['instruct_command_output'])
+                if instruct_command_output['outcome'] == 'success':
+                    print(f'\nstop_cve_2021_44228_app with Java version {jv} succeeded.\n')
+                else:
+                    print(f'\nstop_cve_2021_44228_app with Java version {jv} failed... Exiting.\n')
+                    clean_up()
 
 # Print vulnerable Java versions.
 if vulnerable_java_versions:

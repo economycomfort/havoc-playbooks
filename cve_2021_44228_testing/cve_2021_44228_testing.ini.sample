@@ -5,5 +5,7 @@ domain_name = None
 exec_cmd = touch /opt/havoc/shared/$JAVA_VERSION
 
 [cve_2021_44228_vulnerable_task]
-target_port = 80
+http_port = 80
+domain_name = None
+
 

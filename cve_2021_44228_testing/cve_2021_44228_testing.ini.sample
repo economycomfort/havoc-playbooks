@@ -4,7 +4,6 @@ ldap_port = 1389
 domain_name = None
 exec_cmd = touch /opt/havoc/shared/$JAVA_VERSION
 
-[remote_cve_2021_44228_app_task]
-task_name = remote_trainman_cve_2021_44228_app
+[cve_2021_44228_vulnerable_task]
 target_port = 80
 

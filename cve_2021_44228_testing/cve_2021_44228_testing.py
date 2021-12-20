@@ -223,7 +223,7 @@ print('Press enter to proceed.')
 input()
 
 # Cycle through Java versions list and test exploit
-vulnerable_java_versions = []
+tested_java_versions = {}
 for jv in java_versions:
     # Use a random string for the cve_2021_44228_app task instruct_instance.
     cve_instruct_instance = ''.join(random.choice(string.ascii_letters) for i in range(6))
@@ -242,6 +242,7 @@ for jv in java_versions:
             if instruct_command_output['outcome'] == 'success':
                 print(f'\nstart_cve_2021_44228_app with Java version {jv} succeeded.\n')
                 cve_exists = [cve_2021_44228_app_task_name, cve_instruct_instance]
+                tested_java_versions[jv] = 'tested'
             else:
                 print(f'\nstart_cve_2021_44228_app with Java version {jv} failed.')
                 print(instruct_command_output['message'])
@@ -269,7 +270,7 @@ for jv in java_versions:
                 instruct_command_output = json.loads(ex_result['instruct_command_output'])
                 if instruct_command_output['outcome'] == 'success':
                     print(f'\nexploit_cve_2021_44228 on Java version {jv} succeeded.\n')
-                    vulnerable_java_versions.append(jv)
+                    tested_java_versions[jv] = 'vulnerable'
                 else:
                     print(f'\nexploit_cve_2021_44228 on Java version {jv} failed.\n')
 
@@ -294,10 +295,10 @@ for jv in java_versions:
                     clean_up()
 
 # Print vulnerable Java versions.
-if vulnerable_java_versions:
-    print('\nVulnerable Java versions:')
-    for vuln in vulnerable_java_versions:
-        print(f'\n{vuln}')
+if tested_java_versions:
+    print('\nTested Java versions:')
+    for k,v in tested_java_versions.items():
+        print(f'\nJava version: {k}, Status: {v}')
 
 # Playbook is complete; time to clean up.
 print('\nPlaybook operation completed. Cleaning up ./havoc resources.')

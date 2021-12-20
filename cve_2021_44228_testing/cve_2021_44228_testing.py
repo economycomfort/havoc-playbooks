@@ -56,7 +56,7 @@ exploiter_ldap_port = config.get('cve_2021_44228_exploit_task', 'ldap_port')
 exploiter_domain_name = config.get('cve_2021_44228_exploit_task', 'domain_name')
 exploiter_exec_cmd = config.get('cve_2021_44228_exploit_task', 'exec_cmd')
 vulnerable_domain_name = config.get('cve_2021_44228_vulnerable_task', 'domain_name')
-vulnerable_target_port = config.get('cve_2021_44228_vulnerable_task', 'target_port')
+vulnerable_target_port = config.get('cve_2021_44228_vulnerable_task', 'http_port')
 
 # These vars will be used by the clean_up function to determine what components need to be removed. Each operation that
 # creates one of the below resources will set the var to the resource name to be used in the clean up operation.

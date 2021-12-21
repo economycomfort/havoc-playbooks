@@ -287,9 +287,14 @@ for jv in java_versions:
     # If cve_2021_44228_app started, ask the exploiter task to execute the exploit against the target IP.
     if cve_exists:
         print(f'\nInstructing exploiter task {exploiter_task_name} to execute exploit.')
+        if exploiter_task_host_name == 'None':
+            callback = exploiter_ip
+        else:
+            callback = f'{exploiter_task_host_name}.{exploiter_domain_name}'
         new_exec_cmd = re.sub('\$JAVA_VERSION', jv, exploiter_exec_cmd)
         target_url = f'http://{vulnerable_ip}:{vulnerable_target_port}'
         instruct_args = {
+            'callback': callback,
             'target_url': target_url,
             'http_port': exploiter_http_port,
             'ldap_port': exploiter_ldap_port,

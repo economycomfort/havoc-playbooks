@@ -1,0 +1,14 @@
+[c2_task]
+task_name = c2_http_MM_dd_YYYY_HH_mm
+agent_name = 1x2y3z
+cidr = 192.168.1.0/24
+command_list = nmap -sV -Pn -p 1-1024 $CIDR, cme smb, cme smb $CIDR -u $USER_NAME -p $USER_PASSWORD, cme smb $CIDR -u $USER_NAME -p $USER_PASSWORD --shares, rpcclient -U $USER_NAME%%$USER_PASSWORD -c lsaquery $TARGET, rpcclient -U $USER_NAME%%$USER_PASSWORD -c dsroledominfo $TARGET, rpcclient -U $USER_NAME%%$USER_PASSWORD -c enumprivs $TARGET, rpcclient -U $USER_NAME%%$USER_PASSWORD -c enumdomgroups $TARGET, rpcclient -U $USER_NAME%%$USER_PASSWORD -c netshareenumall $TARGET
+
+[remote_ad_task]
+task_name = remote_trainman_ad
+ad_tld = local
+ad_domain = samdom
+ad_realm = SAMDOM.LOCAL
+user_name = jdisco
+user_password = user_password_152637
+admin_password = samdom_password_152637

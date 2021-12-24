@@ -409,75 +409,9 @@ for dc_result in run_ad_dc_results:
             print('\nrun_ad_dc failed.\n')
             clean_up()
 
-# Execute a list of shell commands on the agent.
-results_count = 0
-for command in command_list.split(', '):
-    if command == 'pause':
-        # Wait for key press and then go to the next command
-        input('Paused. Press Enter to continue...')
-        command = 'whoami'
-    # Replace variables in shell_command
-    target_insert = re.sub('\$TARGET', target_ip, command)
-    cidr_insert = re.sub('\$CIDR', target_cidr, target_insert)
-    tld_insert = re.sub('\$AD_TLD', ad_tld, cidr_insert)
-    domain_insert = re.sub('\$AD_DOMAIN', ad_domain, tld_insert)
-    user_name_insert = re.sub('\$USER_NAME', user_name, domain_insert)
-    user_password_insert = re.sub('\$USER_PASSWORD', user_password, user_name_insert)
-    shell_command = re.sub('\$ADMIN_PASSWORD', admin_password, user_password_insert)
-    print(f'\nTasking agent with agent_shell_command "{shell_command}"\n')
-    # Use a random string for the agent instruct_instance of each shell command.
-    sc_instruct_instance = ''.join(random.choice(string.ascii_letters) for i in range(6))
-    instruct_command = 'agent_shell_command'
-    instruct_args = {'Name': agent_name, 'command': shell_command}
-    h.instruct_task(task_name, sc_instruct_instance, instruct_command, instruct_args)
-
-    # Get the agent_shell_command confirmation.
-    print(f'\nWaiting for confirmation of agent_shell_command "{shell_command}".\n')
-    shell_command_confirmation = get_command_results(task_name, instruct_command, sc_instruct_instance)
-    for sc_conf in shell_command_confirmation:
-        if sc_conf['instruct_command'] == instruct_command and sc_conf['instruct_instance'] == sc_instruct_instance:
-            instruct_command_output = json.loads(sc_conf['instruct_command_output'])
-            if instruct_command_output['outcome'] == 'success':
-                print(f'{shell_command} succeeded.\n')
-            else:
-                print(f'{shell_command} failed.\n')
-                clean_up()
-
-    # Get the agent_shell_command results.
-    print(f'\nGetting results from agent_shell_command "{shell_command}"\n')
-    results = None
-    while not results:
-        try:
-            instruct_command = 'get_shell_command_results'
-            instruct_args = {'Name': agent_name}
-            h.instruct_task(task_name, sc_instruct_instance, instruct_command, instruct_args)
-
-            # Get the output from the get_shell_command_results command.
-            shell_command_results = get_command_results(task_name, instruct_command, sc_instruct_instance, False)
-            for sc_result in shell_command_results:
-                if sc_result['instruct_command'] == instruct_command and \
-                        sc_result['instruct_instance'] == sc_instruct_instance:
-                    instruct_command_output = json.loads(sc_result['instruct_command_output'])
-                    if instruct_command_output['outcome'] == 'success':
-                        results = instruct_command_output['results'][results_count]['results']
-                    else:
-                        results = f'{shell_command} failed.\n'
-            if not results:
-                t.sleep(10)
-        except KeyboardInterrupt:
-            if not clean_up_initiated:
-                print('get_command_results interrupted. Initiating clean_up.')
-                clean_up_initiated = True
-                clean_up()
-    print(f'\n{shell_command} results:\n')
-    print(results)
-    results_count += 1
-
-    # Wait for the powershell_empire task to become idle.
-    print(f'\nWaiting for powershell_empire task {task_name} to become idle.')
-    pse_task_status = get_task_status(task_name)
-    print(f'\n{task_name} is now idle.')
-    t.sleep(random.randrange(20))
+print('\nAn AD DC server is running and an agent is connected. Playbook will halt until prompted to clean up.')
+print('\nPress enter to proceed with clean up.')
+input()
 
 # Playbook is complete; time to clean up.
 print('\nPlaybook operation completed. Cleaning up ./havoc resources.')

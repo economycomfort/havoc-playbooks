@@ -12,7 +12,7 @@ from configparser import ConfigParser
 # Import the havoc Python package.
 import havoc
 
-init_parser = argparse.ArgumentParser(description='havoc playbook - C2 with AD scans')
+init_parser = argparse.ArgumentParser(description='havoc playbook - Windows Recon')
 
 init_parser.add_argument('--profile', help='Use a specific profile from your credential file')
 init_args = init_parser.parse_args()

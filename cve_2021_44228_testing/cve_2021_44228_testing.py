@@ -1,7 +1,6 @@
 # Import the supporting Python packages.
 import re
 import os
-import sys
 import json
 import string
 import random
@@ -58,15 +57,7 @@ exploiter_exec_cmd = config.get('cve_2021_44228_exploit_task', 'exec_cmd')
 vulnerable_domain_name = config.get('cve_2021_44228_vulnerable_task', 'domain_name')
 vulnerable_target_port = config.get('cve_2021_44228_vulnerable_task', 'http_port')
 
-# These vars will be used by the clean_up function to determine what components need to be removed. Each operation that
-# creates one of the below resources will set the var to the resource name to be used in the clean up operation.
-vulnerable_exists = False
-vulnerable_portgroup_exists = False
-exploiter_exists = False
-exploiter_portgroup_exists = False
 cve_exists = False
-clean_up_initiated = False
-
 
 def get_task_attack_ip(tn):
     task_details = h.get_task(tn)
@@ -161,7 +152,7 @@ def clean_up():
         h.delete_portgroup(vulnerable_portgroup_exists)
 
     # All done.
-    sys.exit('\nDone... Exiting.\n')
+    exit('\nDone... Exiting.\n')
 
 
 # Create a portgroup for the vulnerable task's HTTP port.

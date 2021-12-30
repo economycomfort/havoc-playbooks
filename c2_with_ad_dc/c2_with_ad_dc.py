@@ -67,9 +67,9 @@ admin_password = config.get('remote_ad_task', 'admin_password')
 remote_c2_agent_task_name = config.get('remote_c2_agent_task', 'task_name')
 
 if listener_profile != 'None':
-    resource_name = listener_profile
+    resource_name = f'c2-{listener_profile}'
 else:
-    resource_name = listener_type
+    resource_name = f'c2-{listener_type}'
 
 def get_task_attack_ip(tn):
     task_details = h.get_task(tn)

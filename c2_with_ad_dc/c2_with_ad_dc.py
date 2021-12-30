@@ -57,8 +57,6 @@ listener_port = config.get('c2_task', 'listener_port')
 listener_tls = config.get('c2_task', 'listener_tls')
 domain_name = config.get('c2_task', 'domain_name')
 cert_subj = config.get('c2_task', 'cert_subj')
-exfil_type = config.get('exfil_task', 'exfil_type')
-exfil_port = config.get('exfil_task', 'exfil_port')
 remote_ad_task_name = config.get('remote_ad_task', 'task_name')
 ad_tld = config.get('remote_ad_task', 'ad_tld')
 ad_domain = config.get('remote_ad_task', 'ad_domain')
@@ -67,8 +65,6 @@ user_name = config.get('remote_ad_task', 'user_name')
 user_password = config.get('remote_ad_task', 'user_password')
 admin_password = config.get('remote_ad_task', 'admin_password')
 remote_c2_agent_task_name = config.get('remote_c2_agent_task', 'task_name')
-target_cidr = config.get('remote_c2_agent_task', 'cidr')
-command_list = config.get('remote_c2_agent_task', 'command_list')
 
 if listener_profile != 'None':
     resource_name = listener_profile

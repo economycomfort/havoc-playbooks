@@ -158,6 +158,7 @@ def clean_up():
         # Delete the stager file from the workspace.
         print(f'\nDeleting the stager file {stager_exists} from the shared workspace.')
         h.delete_file(stager_exists)
+        os.remove(stager_exists)
 
     if portgroup_exists:
         # Delete the portgroup.

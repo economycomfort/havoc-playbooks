@@ -1,6 +1,6 @@
 [c2_task]
-task_name = c2_http_MM_dd_YYYY_HH_mm
-agent_name = 1x2y3z
+task_name = c2-http_MM_dd_YYYY_HH_mm
+agent_name = 1w2x3y4z
 cidr = 192.168.1.0/24
 command_list = nmap -sS -Pn -p 1-1024 $CIDR, cme smb $CIDR -u $USER_NAME -p $USER_PASSWORD, cme smb $CIDR -u $USER_NAME -p $USER_PASSWORD --shares, cme smb $CIDR -u $USER_NAME -p $USER_PASSWORD --users, cme smb $CIDR -u $USER_NAME -p $USER_PASSWORD --groups, rpcclient -U $USER_NAME%%$USER_PASSWORD -c lsaquery $TARGET, rpcclient -U $USER_NAME%%$USER_PASSWORD -c dsroledominfo $TARGET, rpcclient -U $USER_NAME%%$USER_PASSWORD -c enumprivs $TARGET, rpcclient -U $USER_NAME%%$USER_PASSWORD -c enumdomgroups $TARGET, rpcclient -U $USER_NAME%%$USER_PASSWORD -c netshareenumall $TARGET
 

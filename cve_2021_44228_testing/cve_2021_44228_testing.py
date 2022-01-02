@@ -257,13 +257,13 @@ class Exploit:
         self.cve_exists = None
 
     def refresh_infrastructure(self):
-        infra_setup = Setup()
-        infrastructure = infra_setup.build_infrastructure()
-        self.vulnerable_task_name = infrastructure['vulnerable_task_name']
-        self.vulnerable_ip = infrastructure['vulnerable_ip']
-        self.exploiter_task_name = infrastructure['exploiter_task_name']
-        self.exploiter_task_host_name = infrastructure['exploiter_task_host_name']
-        self.exploiter_ip = infrastructure['exploiter_ip']
+        self.infra_setup = Setup()
+        self.infrastructure = self.infra_setup.build_infrastructure()
+        self.vulnerable_task_name = self.infrastructure['vulnerable_task_name']
+        self.vulnerable_ip = self.infrastructure['vulnerable_ip']
+        self.exploiter_task_name = self.infrastructure['exploiter_task_name']
+        self.exploiter_task_host_name = self.infrastructure['exploiter_task_host_name']
+        self.exploiter_ip = self.infrastructure['exploiter_ip']
 
     def run_exploit_test(self):
         if not self.infrastructure:

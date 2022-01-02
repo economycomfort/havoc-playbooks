@@ -48,7 +48,7 @@ pp = pprint.PrettyPrinter(indent=4)
 
 # Create a config parser and setup config parameters
 config = ConfigParser()
-config.read('havoc-playbooks/windows_recon/windows_recon.ini')
+config.read('havoc-playbooks/windows_exfil/windows_exfil.ini')
 
 exfil_type = config.get('exfil_task', 'exfil_type')
 exfil_port = config.get('exfil_task', 'exfil_port')

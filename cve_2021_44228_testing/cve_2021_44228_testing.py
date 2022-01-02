@@ -130,7 +130,7 @@ class Setup:
                         print('Task terminated.')
                         command_finished = True
                 if not command_finished:
-                    t.sleep(5)
+                    t.sleep(15)
 
         if self.vulnerable_exists:
             print(f'Killing vulnerable task on {self.vulnerable_exists}')
@@ -145,7 +145,7 @@ class Setup:
                         print('Task terminated.')
                         command_finished = True
                 if not command_finished:
-                    t.sleep(5)
+                    t.sleep(15)
 
         if self.exploiter_portgroup_exists:
             # Delete the exploiter portgroup.

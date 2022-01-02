@@ -66,6 +66,8 @@ remote_c2_agent_task_name = config.get('remote_c2_agent_task', 'task_name')
 c2_task_name = config.get('c2_task', 'task_name')
 c2_agent_name = config.get('c2_task', 'agent_name')
 
+exfil_task_exists = None
+exfil_portgroup_exists = None
 
 def get_task_target_ip(tn):
     task_details = h.get_task(tn)
@@ -191,7 +193,11 @@ get_agents_results = get_command_results(c2_task_name, c2_instruct_command, c2_i
 for ga_result in get_agents_results:
     if ga_result['instruct_command'] == c2_instruct_command and ga_result['instruct_instance'] == c2_instruct_instance:
         instruct_command_output = json.loads(ga_result['instruct_command_output'])
-        if c2_agent_name in instruct_command_output['agents']:
+        agent_exists = False
+        for agent in instruct_command_output['agents']:
+            if c2_agent_name in agent:
+                agent_exists = True
+        if agent_exists:
             print(f'Agent {c2_agent_name} exists. Continuing...\n')
         else:
             print(f'Agent {c2_agent_name} not found. Exiting...\n')

@@ -107,13 +107,14 @@ def get_command_results(tn, ic, ii, print_output=True):
     try:
         while not command_finished:
             command_results = h.get_task_results(tn)
-            for entry in command_results['queue']:
-                if entry['instruct_command'] == ic and entry['instruct_instance'] == ii:
-                    command_finished = True
-                    if print_output:
-                        print(f'\n{tn} {ic} results:')
-                        pp.pprint(entry)
-                    results.append(entry)
+            if 'queue' in command_results:
+                for entry in command_results['queue']:
+                    if entry['instruct_command'] == ic and entry['instruct_instance'] == ii:
+                        command_finished = True
+                        if print_output:
+                            print(f'\n{tn} {ic} results:')
+                            pp.pprint(entry)
+                        results.append(entry)
             if not command_finished:
                 t.sleep(5)
     except KeyboardInterrupt:

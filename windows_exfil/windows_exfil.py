@@ -195,7 +195,7 @@ for ga_result in get_agents_results:
         instruct_command_output = json.loads(ga_result['instruct_command_output'])
         agent_exists = False
         for agent in instruct_command_output['agents']:
-            if c2_agent_name in agent:
+            if c2_agent_name == agent['name']:
                 agent_exists = True
         if agent_exists:
             print(f'Agent {c2_agent_name} exists. Continuing...\n')

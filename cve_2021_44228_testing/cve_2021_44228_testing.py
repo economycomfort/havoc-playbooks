@@ -57,8 +57,6 @@ exploiter_exec_cmd = config.get('cve_2021_44228_exploit_task', 'exec_cmd')
 vulnerable_domain_name = config.get('cve_2021_44228_vulnerable_task', 'domain_name')
 vulnerable_target_port = config.get('cve_2021_44228_vulnerable_task', 'http_port')
 
-cve_exists = False
-
 def get_task_attack_ip(tn):
     task_details = h.get_task(tn)
     task_attack_ip = task_details['attack_ip']
@@ -109,12 +107,20 @@ def get_command_results(tn, ic, ii, print_output=True):
         print('get_command_results interrupted. Skipping results...')
     return results
 
-class Setup:
+
+class Exploit:
     def __init__(self):
+        self.infrastructure = None
+        self.vulnerable_task_name = None
+        self.vulnerable_ip = None
+        self.exploiter_task_name = None
+        self.exploiter_task_host_name = None
+        self.exploiter_ip = None
         self.exploiter_exists = None
         self.vulnerable_exists = None
         self.exploiter_portgroup_exists = None
         self.vulnerable_portgroup_exists = None
+        self.cve_exists = None
 
     def clean_up(self, do_exit=None):
         if self.exploiter_exists:
@@ -160,7 +166,6 @@ class Setup:
         # All done.
         if do_exit:
             exit('\nDone... Exiting.\n')
-
 
     def build_infrastructure(self):
         # Create a portgroup for the vulnerable task's HTTP port.
@@ -245,20 +250,8 @@ class Setup:
         }
         return build_results
 
-class Exploit:
-    def __init__(self):
-        self.infra_setup = None
-        self.infrastructure = None
-        self.vulnerable_task_name = None
-        self.vulnerable_ip = None
-        self.exploiter_task_name = None
-        self.exploiter_task_host_name = None
-        self.exploiter_ip = None
-        self.cve_exists = None
-
     def refresh_infrastructure(self):
-        self.infra_setup = Setup()
-        self.infrastructure = self.infra_setup.build_infrastructure()
+        self.infrastructure = self.build_infrastructure()
         self.vulnerable_task_name = self.infrastructure['vulnerable_task_name']
         self.vulnerable_ip = self.infrastructure['vulnerable_ip']
         self.exploiter_task_name = self.infrastructure['exploiter_task_name']
@@ -291,7 +284,7 @@ class Exploit:
                     java_versions = instruct_command_output['java_versions']
                 else:
                     print('\nlist_java_versions failed... Exiting.\n')
-                    self.infra_setup.clean_up(do_exit=True)
+                    self.clean_up(do_exit=True)
 
         # Cycle through Java versions list and test exploit
         tested_java_versions = {}
@@ -355,7 +348,7 @@ class Exploit:
 
                 # If successful exploit, clean_up, else ask the cve_2021_44228_app task to stop the vulnerable app.
                 if not self.infrastructure:
-                    self.infra_setup.clean_up()
+                    self.clean_up()
                 else:
                     print(
                         f'\nStopping cve-2021-44228 vulnerable application on '
@@ -375,11 +368,11 @@ class Exploit:
                                 print(f'\nstop_cve_2021_44228_app with Java version {jv} succeeded.\n')
                             else:
                                 print(f'\nstop_cve_2021_44228_app with Java version {jv} failed... Exiting.\n')
-                                self.infra_setup.clean_up(do_exit=True)
+                                self.clean_up(do_exit=True)
 
         print('All available Java versions tested. Cleaning up...')
         if self.infrastructure:
-            self.infra_setup.clean_up()
+            self.clean_up()
         return tested_java_versions
 
 

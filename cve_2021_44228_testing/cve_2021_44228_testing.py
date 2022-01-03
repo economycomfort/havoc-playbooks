@@ -125,14 +125,14 @@ class Exploit:
     def clean_up(self, do_exit=None):
         if self.exploiter_exists:
             print(f'Killing exploiter task on {self.exploiter_exists}')
-            instruct_instance = 'clean_up'
+            exp_instruct_instance = ''.join(random.choice(string.ascii_letters) for i in range(6))
             instruct_command = 'terminate'
-            h.instruct_task(self.exploiter_exists, instruct_instance, instruct_command)
+            h.instruct_task(self.exploiter_exists, exp_instruct_instance, instruct_command)
             command_finished = None
             while not command_finished:
                 kill_task_results = h.get_task_results(self.exploiter_exists)
                 for entry in kill_task_results['queue']:
-                    if entry['instruct_command'] == instruct_command and entry['instruct_instance'] == instruct_instance:
+                    if entry['instruct_command'] == instruct_command and entry['instruct_instance'] == exp_instruct_instance:
                         print('Task terminated.')
                         t.sleep(5)
                         command_finished = True
@@ -141,14 +141,14 @@ class Exploit:
 
         if self.vulnerable_exists:
             print(f'Killing vulnerable task on {self.vulnerable_exists}')
-            instruct_instance = 'clean_up'
+            vuln_instruct_instance = ''.join(random.choice(string.ascii_letters) for i in range(6))
             instruct_command = 'terminate'
-            h.instruct_task(self.vulnerable_exists, instruct_instance, instruct_command)
+            h.instruct_task(self.vulnerable_exists, vuln_instruct_instance, instruct_command)
             command_finished = None
             while not command_finished:
                 kill_task_results = h.get_task_results(self.vulnerable_exists)
                 for entry in kill_task_results['queue']:
-                    if entry['instruct_command'] == instruct_command and entry['instruct_instance'] == instruct_instance:
+                    if entry['instruct_command'] == instruct_command and entry['instruct_instance'] == vuln_instruct_instance:
                         print('Task terminated.')
                         t.sleep(5)
                         command_finished = True

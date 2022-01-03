@@ -134,9 +134,10 @@ class Exploit:
                 for entry in kill_task_results['queue']:
                     if entry['instruct_command'] == instruct_command and entry['instruct_instance'] == instruct_instance:
                         print('Task terminated.')
+                        t.sleep(5)
                         command_finished = True
                 if not command_finished:
-                    t.sleep(25)
+                    t.sleep(5)
 
         if self.vulnerable_exists:
             print(f'Killing vulnerable task on {self.vulnerable_exists}')
@@ -149,9 +150,10 @@ class Exploit:
                 for entry in kill_task_results['queue']:
                     if entry['instruct_command'] == instruct_command and entry['instruct_instance'] == instruct_instance:
                         print('Task terminated.')
+                        t.sleep(5)
                         command_finished = True
                 if not command_finished:
-                    t.sleep(25)
+                    t.sleep(5)
 
         if self.exploiter_portgroup_exists:
             # Delete the exploiter portgroup.

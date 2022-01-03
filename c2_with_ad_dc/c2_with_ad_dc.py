@@ -148,10 +148,11 @@ def clean_up():
         command_finished = None
         while not command_finished:
             kill_task_results = h.get_task_results(task_exists)
-            for entry in kill_task_results['queue']:
-                if entry['instruct_command'] == instruct_command and entry['instruct_instance'] == instruct_instance:
-                    print('Task terminated.')
-                    command_finished = True
+            if 'queue' in kill_task_results:
+                for entry in kill_task_results['queue']:
+                    if entry['instruct_command'] == instruct_command and entry['instruct_instance'] == instruct_instance:
+                        print('Task terminated.')
+                        command_finished = True
             if not command_finished:
                 t.sleep(5)
 

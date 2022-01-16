@@ -1,7 +1,6 @@
 # Import the supporting Python packages.
 import re
 import os
-import json
 import string
 import random
 import pprint
@@ -89,35 +88,43 @@ def get_task_target_ip(tn):
 
 def clean_up():
     if ad_server_exists:
-        print(f'Killing AD DC on {ad_server_exists[0]}')
+        print(f'Killing AD DC on {ad_server_exists[0]}.\n')
         instruct_instance = ad_server_exists[1]
         instruct_command = 'kill_ad_dc'
-        h.instruct_task(ad_server_exists[0], instruct_instance, instruct_command)
+        kill_ad_dc_response = h.interact_with_task(ad_server_exists[0], instruct_instance, instruct_command)
+        if 'result' in kill_ad_dc_response and kill_ad_dc_response['result'] == 'failed':
+            print(f'Failed to kill AD DC on {ad_server_exists[0]}.\n')
+            print(kill_ad_dc_response)
 
     if agent_exists:
         # Kill the agent.
-        print(f'\nKilling agent with name {agent_exists[0]}.')
+        print(f'\nKilling agent with name {agent_exists[0]}.\n')
         instruct_instance = agent_exists[1]
         instruct_command = 'kill_process'
-        h.instruct_task(agent_exists[2], instruct_instance, instruct_command)
-        # Wait for the agent to shut down.
-        t.sleep(5)
-
-    if task_exists:
-        # Kill the task.
-        print(f'\nKilling task with name {task_exists}.')
-        h.task_shutdown(task_exists)
-        t.sleep(5)
+        kill_agent_response = h.interact_with_task(agent_exists[2], instruct_instance, instruct_command)
+        if 'result' in kill_agent_response and kill_agent_response['result'] == 'failed':
+            print(f'Failed to kill agent with name {agent_exists[0]}.\n')
+            print(kill_agent_response)
 
     if stager_exists:
         # Delete the stager file from the workspace.
-        print(f'\nDeleting the stager file {stager_exists} from the shared workspace.')
+        print(f'\nDeleting the stager file {stager_exists} from the shared workspace.\n')
         h.delete_file(stager_exists)
         os.remove(stager_exists)
 
+    if task_exists:
+        # Kill the task.
+        print(f'\nShutting down task with name {task_exists}.\n')
+        task_shutdown_response = h.task_shutdown(task_exists)
+        if 'completed' not in task_shutdown_response:
+            print(f'Task shutdown for {task_exists} failed.\n')
+            print(task_shutdown_response)
+            exit('\nExiting.')
+        t.sleep(5)
+
     if portgroup_exists:
         # Delete the portgroup.
-        print(f'\nDeleting the {portgroup_exists} portgroup.')
+        print(f'\nDeleting the {portgroup_exists} portgroup.\n')
         h.delete_portgroup(portgroup_exists)
 
     # All done.

@@ -1,7 +1,6 @@
 # Import the supporting Python packages.
 import re
 import os
-import json
 import string
 import random
 import pprint
@@ -81,53 +80,23 @@ def get_task_status(tn):
     return task_details
 
 
-# A 'while loop' can be used to continually pull the results queue until the command results are returned.
-def get_command_results(tn, ic, ii, print_output=True):
-    results = []
-    command_finished = None
-    try:
-        while not command_finished:
-            command_results = h.get_task_results(tn)
-            if 'queue' in command_results:
-                for entry in command_results['queue']:
-                    if entry['instruct_command'] == ic and entry['instruct_instance'] == ii:
-                        command_finished = True
-                        if print_output:
-                            print(f'\n{tn} {ic} results:')
-                            pp.pprint(entry)
-                        results.append(entry)
-            if not command_finished:
-                t.sleep(5)
-    except KeyboardInterrupt:
-        exit('get_command_results interrupted. Exiting...')
-    return results
-
-
 # Verify c2_task exists
-print(f'\nVerifying that C2 task {c2_task_name} exists.')
-task_list = h.list_tasks()
-if c2_task_name in task_list['tasks']:
-    c2_task_details = h.get_task(c2_task_name)
-    if c2_task_details['task_type'] == 'powershell_empire':
-        print(f'C2 task {c2_task_name} found.')
-    else:
-        exit(f'{c2_task_name} found but task_type is not "powershell_empire" - exiting...')
+print(f'\nVerifying that powershell_empire task {c2_task_name} exists.')
+c2_task = h.verify_task(c2_task_name, 'powershell_empire')
+if c2_task:
+    print(f'C2 task {c2_task_name} found.')
 else:
-    exit(f'C2 task {c2_task_name} does not exist. Exiting...')
+    exit(f'No powershell_empire task with name {c2_task_name} found. Exiting...')
 
 # Verify remote_ad_task_name exists
 print(f'\nVerifying that trainman task {remote_ad_task_name} exists.')
 target_ip = None
-task_list = h.list_tasks()
-if remote_ad_task_name in task_list['tasks']:
-    remote_ad_task_details = h.get_task(remote_ad_task_name)
-    if remote_ad_task_details['task_type'] == 'trainman':
-        print(f'Trainman task {remote_ad_task_name} found.')
-    else:
-        exit(f'{remote_ad_task_name} found but task_type is not "trainman" - exiting...')
+remote_ad_task = h.verify_task(remote_ad_task_name, 'trainman')
+if remote_ad_task:
+    print(f'Trainman task {remote_ad_task_name} found.')
     target_ip = get_task_target_ip(remote_ad_task_name)
 else:
-    exit(f'\nTrainman task {remote_ad_task_name} does not exist. Exiting...')
+    exit(f'\nNo trainman task with name {remote_ad_task_name} found. Exiting...')
 
 # Execute a list of shell commands on the agent.
 results_count = 0
@@ -149,18 +118,11 @@ for command in command_list.split(', '):
     sc_instruct_instance = ''.join(random.choice(string.ascii_letters) for i in range(6))
     instruct_command = 'agent_shell_command'
     instruct_args = {'Name': c2_agent_name, 'command': shell_command}
-    h.instruct_task(c2_task_name, sc_instruct_instance, instruct_command, instruct_args)
-
-    # Get the agent_shell_command confirmation.
-    print(f'\nWaiting for confirmation of agent_shell_command "{shell_command}".\n')
-    shell_command_confirmation = get_command_results(c2_task_name, instruct_command, sc_instruct_instance)
-    for sc_conf in shell_command_confirmation:
-        if sc_conf['instruct_command'] == instruct_command and sc_conf['instruct_instance'] == sc_instruct_instance:
-            instruct_command_output = json.loads(sc_conf['instruct_command_output'])
-            if instruct_command_output['outcome'] == 'success':
-                print(f'{shell_command} succeeded.\n')
-            else:
-                print(f'{shell_command} failed.\n')
+    command_response = h.interact_with_task(c2_task_name, sc_instruct_instance, instruct_command, instruct_args)
+    if command_response['outcome'] == 'success':
+        print(f'{shell_command} succeeded.\n')
+    else:
+        print(f'{shell_command} failed.\n')
 
     # Get the agent_shell_command results.
     print(f'\nGetting results from agent_shell_command "{shell_command}"\n')
@@ -169,22 +131,15 @@ for command in command_list.split(', '):
         try:
             instruct_command = 'get_shell_command_results'
             instruct_args = {'Name': c2_agent_name}
-            h.instruct_task(c2_task_name, sc_instruct_instance, instruct_command, instruct_args)
-
-            # Get the output from the get_shell_command_results command.
-            shell_command_results = get_command_results(c2_task_name, instruct_command, sc_instruct_instance, False)
-            for sc_result in shell_command_results:
-                if sc_result['instruct_command'] == instruct_command and \
-                        sc_result['instruct_instance'] == sc_instruct_instance:
-                    instruct_command_output = json.loads(sc_result['instruct_command_output'])
-                    if instruct_command_output['outcome'] == 'success':
-                        results = instruct_command_output['results'][results_count]['results']
-                    else:
-                        results = f'{shell_command} failed.\n'
+            shell_results = h.instruct_task(c2_task_name, sc_instruct_instance, instruct_command, instruct_args)
+            if shell_results['outcome'] == 'success':
+                results = shell_results['results'][results_count]['results']
+            else:
+                results = f'{shell_command} failed.\n'
             if not results:
                 t.sleep(10)
         except KeyboardInterrupt:
-            exit('get_command_results interrupted. Exiting...')
+            exit('get_shell_command_results interrupted. Exiting...')
     print(f'\n{shell_command} results:\n')
     print(results)
     results_count += 1

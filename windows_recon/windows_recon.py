@@ -131,7 +131,7 @@ for command in command_list.split(', '):
         try:
             instruct_command = 'get_shell_command_results'
             instruct_args = {'Name': c2_agent_name}
-            shell_results = h.instruct_task(c2_task_name, sc_instruct_instance, instruct_command, instruct_args)
+            shell_results = h.interact_with_task(c2_task_name, sc_instruct_instance, instruct_command, instruct_args)
             if shell_results['outcome'] == 'success':
                 results = shell_results['results'][results_count]['results']
             else:

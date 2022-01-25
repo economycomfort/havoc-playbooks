@@ -191,7 +191,7 @@ exfil_instruct_instance = ''.join(random.choice(string.ascii_letters) for i in r
 
 # Ask the exfil_task to start an exfil listener service.
 print(f'\nStarting an exfil listener service on {exfil_task_name}.')
-instruct_args = {'port': int(exfil_port), 'subj': exfil_subj}
+instruct_args = {'listen_port': int(exfil_port), 'subj': exfil_subj}
 instruct_command = 'start_https_exfil_server'
 exfil_listener = h.interact_with_task(exfil_task_name, exfil_instruct_instance, instruct_command, instruct_args)
 if exfil_listener['outcome'] == 'success':

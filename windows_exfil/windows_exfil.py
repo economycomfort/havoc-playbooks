@@ -198,7 +198,9 @@ if exfil_listener['outcome'] == 'success':
     print('\nstart_https_exfil_server succeeded.\n')
     exfil_service_exists = [exfil_task_name, exfil_instruct_instance]
 else:
-    print('\nstart_https_exfil_server failed... Exiting.\n')
+    print('\nstart_https_exfil_server failed. Exfil listener output:\n')
+    print(exfil_listener)
+    print('\nExiting...\n')
     clean_up()
 
 # Setup exfil host.

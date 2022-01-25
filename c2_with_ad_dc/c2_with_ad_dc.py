@@ -292,6 +292,7 @@ else:
 
 # Wait for the agent to connect.
 print(f'\nWaiting for an agent connection on task {task_name}.\n')
+agent_name = None
 try:
     wait_for_c2_response = h.wait_for_c2(task_name)
     agent_name = wait_for_c2_response['agent_info']['name']
@@ -323,7 +324,14 @@ else:
     print('\nrun_ad_dc failed.\n')
     clean_up()
 
-print('\nAn AD DC server is running and an agent is connected. Playbook will halt until prompted to clean up.')
+print(
+    '\nAn AD DC server is running and an agent is connected. '
+    f'\nC2 task name: {task_name}'
+    f'\nAgent name: {agent_name}'
+    f'\nRemote AD task name: {remote_ad_task_name}'
+    f'\nRemote agent task name: {remote_c2_agent_task_name}'
+    '\n\nPlaybook will halt until prompted to clean up.'
+    )
 print('\nPress enter to proceed with clean up.')
 input()
 

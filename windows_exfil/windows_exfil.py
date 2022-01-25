@@ -111,13 +111,9 @@ def clean_up():
     # All done.
     exit('\nDone... Exiting.\n')
 
-
-# Get task list to verify task availability
-task_list = h.list_tasks()
-
 # Verify c2_task exists
 print(f'\nVerifying that C2 task {c2_task_name} exists.')
-c2_task = h.verify_task(c2_task_name, 'trainman')
+c2_task = h.verify_task(c2_task_name, 'powershell_empire')
 if c2_task:
     print(f'C2 task {c2_task_name} found.')
 else:

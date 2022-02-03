@@ -65,6 +65,12 @@ user_password = config.get('remote_ad_task', 'user_password')
 admin_password = config.get('remote_ad_task', 'admin_password')
 remote_c2_agent_task_name = config.get('remote_c2_agent_task', 'task_name')
 
+ad_server_exists = None
+agent_exists = None
+stager_exists = None
+task_exists = None
+portgroup_exists = None
+
 if listener_profile != 'None':
     resource_name = f'c2-{listener_profile}'
 else:

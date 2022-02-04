@@ -80,19 +80,6 @@ def get_task_target_ip(tn):
     return task_target_ip
 
 
-# Poll the task_details until the task's status 'idle'.
-def get_task_status(tn):
-    task_status = None
-    task_details = None
-    while task_status != 'idle':
-        t.sleep(5)
-        task_details = h.get_task(tn)
-        task_status = task_details['task_status']
-    print(f'\n{tn} is ready:')
-    pp.pprint(task_details)
-    return task_details
-
-
 def clean_up():
     if exfil_task_exists:
         print(f'\nShutting down Exfil task {exfil_task_exists}.\n')
@@ -210,7 +197,6 @@ else:
     exfil_host = exfil_task_ip
 
 # Execute a list of shell commands on the agent.
-results_count = 0
 for command in command_list.split(', '):
     if command == 'pause':
         # Wait for key press and then go to the next command
@@ -235,32 +221,41 @@ for command in command_list.split(', '):
     command_response = h.interact_with_task(c2_task_name, sc_instruct_instance, instruct_command, instruct_args)
     if command_response['outcome'] == 'success':
         print(f'{shell_command} succeeded.\n')
+        command_task_id = command_response['message']['taskID']
     else:
-        print(f'{shell_command} failed.\n')
+        print(f'{instruct_command} failed.\n')
+        command_task_id = None
 
     # Get the agent_shell_command results.
-    print(f'\nGetting results from agent_shell_command "{shell_command}"\n')
-    results = None
-    while not results:
-        try:
-            instruct_command = 'get_shell_command_results'
-            instruct_args = {'Name': c2_agent_name}
-            shell_results = h.interact_with_task(c2_task_name, sc_instruct_instance, instruct_command, instruct_args)
-            if shell_results['outcome'] == 'success':
-                results = shell_results['results'][results_count]['results']
-            else:
-                results = f'{shell_command} failed.\n'
-            if not results:
-                t.sleep(10)
-        except KeyboardInterrupt:
-            exit('Interrupting get_shell_command_results. Exiting...')
-    print(f'\n{shell_command} results:\n')
-    print(results)
-    results_count += 1
+    if command_task_id:
+        print(f'\nGetting results from agent_shell_command "{shell_command}"\n')
+        results = None
+        while not results:
+            try:
+                instruct_command = 'get_shell_command_results'
+                instruct_args = {'Name': c2_agent_name}
+                shell_results = h.interact_with_task(c2_task_name, sc_instruct_instance, instruct_command, instruct_args)
+                if shell_results['outcome'] == 'success':
+                    for shell_result in shell_results['results']:
+                        if shell_result['taskID'] == command_task_id:
+                            results = shell_result['results']
+                else:
+                    results = f'{instruct_command} failed.\n'
+                if not results:
+                    t.sleep(10)
+            except KeyboardInterrupt:
+                print('Interrupting get_shell_command_results. Exiting...')
+                clean_up()
+        print(f'\n{shell_command} results:\n')
+        print(results)
 
     # Wait for the powershell_empire task to become idle.
     print(f'\nWaiting for powershell_empire task {c2_task_name} to become idle.')
-    pse_task_status = get_task_status(c2_task_name)
+    try:
+        h.wait_for_idle_task
+    except KeyboardInterrupt:
+        print('Interrupting wait_for_idle_task. Exiting...')
+        clean_up()
     print(f'\n{c2_task_name} is now idle.')
     t.sleep(random.randrange(20))
 

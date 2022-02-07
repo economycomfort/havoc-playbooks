@@ -80,7 +80,7 @@ def clean_up():
         agent_name = agent_exists[0]
         instruct_args = {'Name': f'{agent_name}'}
         kill_agent_response = h.interact_with_task(agent_exists[2], instruct_instance, instruct_command, instruct_args)
-        if 'result' in kill_agent_response and kill_agent_response['result'] == 'failed':
+        if 'outcome' in kill_agent_response and kill_agent_response['outcome'] == 'failed':
             print(f'Failed to kill agent with name {agent_exists[0]}.\n')
             print(kill_agent_response)
 
@@ -235,7 +235,7 @@ while c2_listener_profile != 'exit':
         kill_listener_response = h.interact_with_task(
             c2_listener_exists[0], c2_instruct_instance, instruct_command, instruct_args
         )
-        if 'result' in kill_listener_response and kill_listener_response['outcome'] == 'failed':
+        if 'outcome' in kill_listener_response and kill_listener_response['outcome'] == 'failed':
             print(f'Failed to kill listener {c2_listener_exists[1]}.\n')
             print(kill_listener_response)
             continue

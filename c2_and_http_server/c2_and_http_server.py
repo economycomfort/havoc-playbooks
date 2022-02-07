@@ -320,7 +320,19 @@ while c2_listener_profile != 'exit':
     # Use a random string for the agent instruct_instance.
     agent_instruct_instance = ''.join(random.choice(string.ascii_letters) for i in range(6))
 
-    print(f'\nWaiting for an agent connection on task {c2_task_name}.\n')
+    if http_server_tls.lower() == 'true':
+        protocol = 'https'
+    else:
+        protocol = 'http'
+    if http_server_task_host_name == 'None':
+        http_server_url = f'{protocol}://{http_server_task_ip}/{c2_listener_profile}.bat'
+    else:
+        http_server_url = f'{protocol}://www.{http_server_domain_name}/{c2_listener_profile}.bat'
+    print(
+        f'\nWaiting for an agent connection on task {c2_task_name}.\n'
+        f'\nThe agent launcher can be downloaded from the HTTP server here:'
+        f'\nHTTP server URL: {http_server_url}'
+    )
     agent_name = None
     try:
         wait_for_c2_response = h.wait_for_c2(c2_task_name)
@@ -334,8 +346,9 @@ while c2_listener_profile != 'exit':
     print(
         '\nAn agent is connected. '
         f'\nC2 task name: {c2_task_name}'
+        f'\nC2 IP address: {c2_task_ip}'
+        f'\nC2 listener: {c2_listener_host}'
         f'\nAgent name: {agent_name}'
-        f'\nHTTP server task name: {http_server_task_name}'
         '\n\nPlaybook will halt until prompted to proceed with next listener profile.'
         )
     print('\nPress enter to proceed.')

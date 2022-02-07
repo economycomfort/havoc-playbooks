@@ -75,6 +75,21 @@ if c2_task:
 else:
     exit(f'No powershell_empire task with name {c2_task_name} found. Exiting...')
 
+# Verify that the C2 agent exists.
+print(f'\nVerifying that agent {c2_agent_name} exists.')
+c2_instruct_instance = ''.join(random.choice(string.ascii_letters) for i in range(6))
+c2_instruct_command = 'get_agents'
+c2_instruct_args = {'Name': c2_agent_name}
+agents_list = h.interact_with_task(c2_task_name, c2_instruct_instance, c2_instruct_command, c2_instruct_args)
+agent_exists = False
+for agent in agents_list['agents']:
+    if c2_agent_name == agent['name']:
+        agent_exists = True
+if agent_exists:
+    print(f'Agent {c2_agent_name} exists. Continuing...\n')
+else:
+    exit(f'Agent {c2_agent_name} not found. Exiting...\n')
+
 # Verify remote_ad_task_name exists
 print(f'\nVerifying that trainman task {remote_ad_task_name} exists.')
 target_ip = None

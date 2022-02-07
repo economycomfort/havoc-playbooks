@@ -98,7 +98,7 @@ def clean_up():
         instruct_instance = ad_server_exists[1]
         instruct_command = 'kill_ad_dc'
         kill_ad_dc_response = h.interact_with_task(ad_server_exists[0], instruct_instance, instruct_command)
-        if 'result' in kill_ad_dc_response and kill_ad_dc_response['result'] == 'failed':
+        if 'outcome' in kill_ad_dc_response and kill_ad_dc_response['outcome'] == 'failed':
             print(f'Failed to kill AD DC on {ad_server_exists[0]}.\n')
             print(kill_ad_dc_response)
 
@@ -108,7 +108,7 @@ def clean_up():
         instruct_instance = agent_exists[1]
         instruct_command = 'kill_process'
         kill_agent_response = h.interact_with_task(agent_exists[2], instruct_instance, instruct_command)
-        if 'result' in kill_agent_response and kill_agent_response['result'] == 'failed':
+        if 'outcome' in kill_agent_response and kill_agent_response['outcome'] == 'failed':
             print(f'Failed to kill agent with name {agent_exists[0]}.\n')
             print(kill_agent_response)
 

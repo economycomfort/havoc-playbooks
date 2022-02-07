@@ -175,6 +175,7 @@ http_instruct_instance = ''.join(random.choice(string.ascii_letters) for i in ra
 
 # If TLS listener requested for http_server, generate a certificate.
 if http_server_tls.lower() == 'true':
+    print('\nGenerating a certificate to support a TLS web service.')
     subj = None
     if http_server_domain_name != 'None':
         subj = re.sub('\$HOST', f'www.{http_server_domain_name}', http_server_cert_subj)
@@ -281,6 +282,7 @@ while c2_listener_profile != 'exit':
     for k, v in c2_stager.items():
         instruct_args[k] = v
     outfile = instruct_args['OutFile']
+    stager_name = instruct_args['StagerName']
     create_stager = h.interact_with_task(c2_task_name, c2_instruct_instance, instruct_command, instruct_args)
     if create_stager['outcome'] == 'success':
         print('\ncreate_stager succeeded.\n')
@@ -288,7 +290,7 @@ while c2_listener_profile != 'exit':
         print('\ncreate_stager failed with response:\n')
         print(create_stager)
         continue
-    output = create_stager['stager']['launcher']['Output']
+    output = create_stager['stager'][stager_name]['Output']
     subprocess.call(f'echo {output} | base64 -d > {outfile}', shell=True)
 
     # Upload the stager file to the shared workspace

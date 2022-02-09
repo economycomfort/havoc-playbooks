@@ -3,7 +3,6 @@ listener_port = 80
 listener_tls = False
 domain_name = None
 cert_subj = /C=US/ST=Utah/L=Lehi/O=Your Company, Inc./OU=IT/CN=$HOST
-stager = { 'StagerName': 'windows/launcher_bat', 'Delete': 'False', 'OutFile': 'launcher.bat' }
 
 [http_server_task]
 http_port = 80

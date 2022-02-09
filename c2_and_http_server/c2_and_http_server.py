@@ -286,6 +286,13 @@ while c2_listener_profile != 'exit':
         continue
 
     # Generate a stager for the listener.
+    c2_stager = ast.literal_eval(
+        input(
+            'Enter a stager configuration in the form of a dictionary like the example below.\n'
+            '{ "StagerName": "windows/launcher_bat", "Delete": "False", "OutFile": "launcher.bat" }\n'
+            'Stager config: '
+        )
+    )
     print(f'\nGenerating a stager for the {c2_listener_profile} listener.')
     instruct_command = 'create_stager'
     instruct_args = {

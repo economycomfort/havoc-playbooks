@@ -243,6 +243,11 @@ while c2_listener_profile != 'exit':
             print(f'Failed to kill agent with name {agent_exists[0]}.\n')
             print(kill_agent_response)
 
+    if stager_exists:
+        print(f'\nDeleting the stager file {stager_exists} from the shared workspace.\n')
+        h.delete_file(stager_exists)
+        os.remove(stager_exists)
+
     # Check for an existing listener and kill it.
     if c2_listener_exists:
         print(f'\nKilling existing listener {c2_listener_exists[1]}.\n')

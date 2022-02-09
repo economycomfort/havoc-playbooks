@@ -120,7 +120,7 @@ h.update_portgroup_rule(f'http_server_{sdate}', 'add', f'{target_ip}/32', http_s
 http_portgroup_exists = f'http_server_{sdate}'
 
 # Create a portgroup for the powershell_empire task's listener.
-print(f'\nCreating a portgroup for listener port {c2_listener_port}.')
+print(f'\nCreating a portgroup for the C2 listener.')
 h.create_portgroup(f'c2_server_{sdate}', f'Allows port {c2_listener_port} traffic')
 print(f'\nAdding portgroup rule to allow C2 agent IP {target_ip} to reach the C2 listener on port {c2_listener_port}.\n')
 h.update_portgroup_rule(f'c2_server_{sdate}', 'add', f'{target_ip}/32', c2_listener_port, 'tcp')
@@ -185,9 +185,9 @@ if http_server_tls.lower() == 'true':
     instruct_args = {'subj': subj}
     cert_gen = h.interact_with_task(http_server_task_name, http_instruct_instance, instruct_command, instruct_args)
     if cert_gen['outcome'] == 'success':
-        print('\ncert_gen succeeded.\n')
+        print('cert_gen succeeded.\n')
     else:
-        print('\ncert_gen failed... Exiting.\n')
+        print('cert_gen failed... Exiting.\n')
         clean_up()
 
 # Ask the http_server task to start a web service.
@@ -230,6 +230,18 @@ while c2_listener_profile != 'exit':
     if c2_listener_profile == 'exit':
         print('Received "exit" input. Initiating clean up...')
         clean_up()
+
+    # Check for an existing agent and kill it.
+    if agent_exists:
+        print(f'\nSending kill command to agent with name {agent_exists[0]}.\n')
+        instruct_instance = agent_exists[1]
+        instruct_command = 'kill_agent'
+        agent_name = agent_exists[0]
+        instruct_args = {'Name': f'{agent_name}'}
+        kill_agent_response = h.interact_with_task(agent_exists[2], instruct_instance, instruct_command, instruct_args)
+        if 'outcome' in kill_agent_response and kill_agent_response['outcome'] == 'failed':
+            print(f'Failed to kill agent with name {agent_exists[0]}.\n')
+            print(kill_agent_response)
 
     # Check for an existing listener and kill it.
     if c2_listener_exists:

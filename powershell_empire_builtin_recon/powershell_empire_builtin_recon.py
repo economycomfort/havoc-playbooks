@@ -45,9 +45,9 @@ config.read('havoc-playbooks/powershell_empire_builtin_recon/powershell_empire_b
 
 c2_task_name = config.get('c2_task', 'task_name')
 c2_agent_name = config.get('c2_task', 'agent_name')
-modules_list = config.get('modules', 'modules_list')
+modules_list = config.get('modules', 'modules_list').split(', ')
 module_config = {}
-for module in modules_list.split(', '):
+for module in modules_list:
     module_config[module] = dict(config.items(module))
 
 # Verify c2_task exists

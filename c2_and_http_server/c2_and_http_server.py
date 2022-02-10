@@ -154,7 +154,7 @@ portgroups = [f'c2_server_{sdate}']
 if c2_domain_name == 'None':
     c2_task_host_name = 'None'
 else:
-    c2_task_host_name = 'pse'
+    c2_task_host_name = 'c2'
 print(f'\nLaunching powershell_empire task with name {c2_task_name}.')
 c2_task = h.task_startup(
     c2_task_name,

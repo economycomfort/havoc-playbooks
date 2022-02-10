@@ -97,7 +97,7 @@ def clean_up():
         print(f'Killing AD DC on {ad_server_exists[0]}.\n')
         instruct_instance = ad_server_exists[1]
         instruct_command = 'kill_ad_dc'
-        kill_ad_dc_response = h.interact_with_task(ad_server_exists[0], instruct_instance, instruct_command)
+        kill_ad_dc_response = h.interact_with_task(ad_server_exists[0], instruct_command, instruct_instance)
         if 'outcome' in kill_ad_dc_response and kill_ad_dc_response['outcome'] == 'failed':
             print(f'Failed to kill AD DC on {ad_server_exists[0]}.\n')
             print(kill_ad_dc_response)
@@ -107,7 +107,7 @@ def clean_up():
         print(f'\nKilling agent with name {agent_exists[0]}.\n')
         instruct_instance = agent_exists[1]
         instruct_command = 'kill_process'
-        kill_agent_response = h.interact_with_task(agent_exists[2], instruct_instance, instruct_command)
+        kill_agent_response = h.interact_with_task(agent_exists[2], instruct_command, instruct_instance)
         if 'outcome' in kill_agent_response and kill_agent_response['outcome'] == 'failed':
             print(f'Failed to kill agent with name {agent_exists[0]}.\n')
             print(kill_agent_response)
@@ -197,7 +197,7 @@ if listener_tls == 'yes':
         subj = re.sub('\$HOST', f'{c2_ip}', cert_subj)
     instruct_command = 'cert_gen'
     instruct_args = {'subj': subj}
-    cert_gen = h.interact_with_task(task_name, c2_instruct_instance, instruct_command, instruct_args)
+    cert_gen = h.interact_with_task(task_name, instruct_command, c2_instruct_instance, instruct_args)
     if cert_gen['outcome'] == 'success':
         print('\ncert_gen succeeded.\n')
     else:
@@ -225,7 +225,7 @@ if listener_type == 'http_malleable' and listener_profile != 'None':
     instruct_args['Profile'] = f'{listener_profile}.profile'
 if listener_tls == 'yes':
     instruct_args['CertPath'] = '/opt/Empire/empire/server/data/'
-create_listener = h.interact_with_task(task_name, c2_instruct_instance, instruct_command, instruct_args)
+create_listener = h.interact_with_task(task_name, instruct_command, c2_instruct_instance, instruct_args)
 if create_listener['outcome'] == 'success':
     print('\ncreate_listener succeeded.\n')
 else:
@@ -241,7 +241,7 @@ instruct_args = {
     'Language': 'python',
     'OutFile': f'{resource_name}.sh'
 }
-stager = h.interact_with_task(task_name, c2_instruct_instance, instruct_command, instruct_args)
+stager = h.interact_with_task(task_name, instruct_command, c2_instruct_instance, instruct_args)
 if stager['outcome'] == 'success':
     print('\ncreate_stager succeeded.\n')
 else:
@@ -264,7 +264,7 @@ c2_agent_instruct_instance = ''.join(random.choice(string.ascii_letters) for i i
 print(f'\nDeleting any existing {resource_name}.sh stager from remote trainman task {remote_c2_agent_task_name}.')
 instruct_command = 'del'
 instruct_args = {'file_name': f'{resource_name}.sh'}
-delete = h.interact_with_task(remote_c2_agent_task_name, c2_agent_instruct_instance, instruct_command, instruct_args)
+delete = h.interact_with_task(remote_c2_agent_task_name, instruct_command, c2_agent_instruct_instance, instruct_args)
 if delete['outcome'] == 'success':
     print('\nFile delete request succeeded.\n')
 else:
@@ -273,7 +273,7 @@ else:
 # Ask the trainman task to sync it's local workspace from the shared workspace.
 print(f'\nDownloading stager file from shared workspace to {remote_c2_agent_task_name} task local workspace.')
 instruct_command = 'sync_from_workspace'
-sync_workspace = h.interact_with_task(remote_c2_agent_task_name, c2_agent_instruct_instance, instruct_command)
+sync_workspace = h.interact_with_task(remote_c2_agent_task_name, instruct_command, c2_agent_instruct_instance)
 if sync_workspace['outcome'] == 'success':
     print('\nsync_from_workspace succeeded.\n')
 else:
@@ -286,8 +286,8 @@ instruct_command = 'execute_process'
 instruct_args = {'file_path': f'/opt/havoc/shared/{resource_name}.sh'}
 execute_process = h.interact_with_task(
     remote_c2_agent_task_name,
-    c2_agent_instruct_instance,
     instruct_command,
+    c2_agent_instruct_instance,
     instruct_args
 )
 if execute_process['outcome'] == 'success':
@@ -322,7 +322,7 @@ instruct_args = {
     'user_password': user_password,
     'admin_password': admin_password
 }
-run_ad_dc = h.interact_with_task(remote_ad_task_name, ad_instruct_instance, instruct_command, instruct_args)
+run_ad_dc = h.interact_with_task(remote_ad_task_name, instruct_command, ad_instruct_instance, instruct_args)
 if run_ad_dc['outcome'] == 'success':
     print('\nrun_ad_dc succeeded.\n')
     ad_server_exists = [remote_ad_task_name, ad_instruct_instance]

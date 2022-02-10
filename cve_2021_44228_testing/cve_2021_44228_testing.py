@@ -213,8 +213,8 @@ class Exploit:
             instruct_command = 'start_cve_2021_44228_app'
             start_cve_results = h.interact_with_task(
                 self.vulnerable_task_name,
-                cve_instance,
                 instruct_command,
+                cve_instance,
                 instruct_args
             )
             if start_cve_results['outcome'] == 'success':
@@ -245,8 +245,8 @@ class Exploit:
                 instruct_command = 'exploit_cve_2021_44228'
                 exploit_results = h.interact_with_task(
                     self.exploiter_task_name,
-                    cve_instance,
                     instruct_command,
+                    cve_instance,
                     instruct_args
                 )
                 if exploit_results['outcome'] == 'success':
@@ -265,7 +265,7 @@ class Exploit:
                         f'{self.vulnerable_task_name} with Java version {jv}.'
                     )
                     instruct_command = 'stop_cve_2021_44228_app'
-                    stop_cve_results = h.interact_with_task(self.vulnerable_task_name, cve_instance, instruct_command)
+                    stop_cve_results = h.interact_with_task(self.vulnerable_task_name, instruct_command, cve_instance)
                     if stop_cve_results['outcome'] == 'success':
                         print(f'\nstop_cve_2021_44228_app with Java version {jv} succeeded.\n')
                     else:

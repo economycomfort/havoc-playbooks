@@ -80,7 +80,7 @@ print(f'\nVerifying that agent {c2_agent_name} exists.')
 c2_instruct_instance = ''.join(random.choice(string.ascii_letters) for i in range(6))
 c2_instruct_command = 'get_agents'
 c2_instruct_args = {'Name': c2_agent_name}
-agents_list = h.interact_with_task(c2_task_name, c2_instruct_instance, c2_instruct_command, c2_instruct_args)
+agents_list = h.interact_with_task(c2_task_name, c2_instruct_command, c2_instruct_instance, c2_instruct_args)
 agent_exists = False
 for agent in agents_list['agents']:
     if c2_agent_name == agent['name']:
@@ -119,7 +119,7 @@ for command in command_list.split(', '):
     sc_instruct_instance = ''.join(random.choice(string.ascii_letters) for i in range(6))
     instruct_command = 'agent_shell_command'
     instruct_args = {'Name': c2_agent_name, 'command': shell_command}
-    command_response = h.interact_with_task(c2_task_name, sc_instruct_instance, instruct_command, instruct_args)
+    command_response = h.interact_with_task(c2_task_name, instruct_command, sc_instruct_instance, instruct_args)
     if command_response['outcome'] == 'success':
         print(f'{shell_command} succeeded.\n')
         command_task_id = command_response['message']['taskID']
@@ -135,7 +135,7 @@ for command in command_list.split(', '):
             try:
                 instruct_command = 'get_shell_command_results'
                 instruct_args = {'Name': c2_agent_name}
-                shell_results = h.interact_with_task(c2_task_name, sc_instruct_instance, instruct_command, instruct_args)
+                shell_results = h.interact_with_task(c2_task_name, instruct_command, sc_instruct_instance, instruct_args)
                 if shell_results['outcome'] == 'success':
                     for shell_result in shell_results['results']:
                         if shell_result['taskID'] == command_task_id:

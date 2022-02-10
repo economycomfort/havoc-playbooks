@@ -3,18 +3,4 @@ task_name = c2-http_MM_dd_YYYY_HH_mm
 agent_name = 1w2x3y4z
 
 [modules]
-modules_list = situational_awareness/network/portscan, situational_awareness/network/reverse_dns, situational_awareness/network/bloodhound, situational_awareness/network/powerview/share_finder
-
-[situational_awareness/network/portscan]
-ports = 1-1024
-
-[situational_awareness/network/reverse_dns]
-cidr = 192.168.1.0/24
-
-[situational_awareness/network/bloodhound]
-collection_method = Default
-threads = 20
-throttle = 1000
-
-[situational_awareness/network/powerview/share_finder]
-threads = 20
+modules_list = powershell/situational_awareness/network/portscan, powershell/situational_awareness/network/reverse_dns, powershell/situational_awareness/network/bloodhound, powershell/situational_awareness/network/powerview/share_finder

@@ -1,5 +1,6 @@
 # Import the supporting Python packages.
 import os
+import ast
 import string
 import random
 import pprint
@@ -46,9 +47,6 @@ config.read('havoc-playbooks/powershell_empire_builtin_recon/powershell_empire_b
 c2_task_name = config.get('c2_task', 'task_name')
 c2_agent_name = config.get('c2_task', 'agent_name')
 modules_list = config.get('modules', 'modules_list').split(', ')
-module_config = {}
-for module in modules_list:
-    module_config[module] = dict(config.items(module))
 
 # Verify c2_task exists
 print(f'\nVerifying that powershell_empire task {c2_task_name} exists.')
@@ -76,11 +74,18 @@ else:
 # Execute the list of modules.
 for executing_module in modules_list:
     print(f'\nTasking agent with execute_module "{executing_module}"\n')
+    module_config = ast.literal_eval(
+        input(
+            'Enter a module configuration in the form of a dictionary like the example below.\n'
+            '{ "CIDR": "192.168.1.0/24" }\n'
+            'Module config: '
+        )
+    )
     # Use a random string for the agent instruct_instance of each shell command.
     module_instruct_instance = ''.join(random.choice(string.ascii_letters) for i in range(6))
     instruct_command = 'execute_module'
     instruct_args = {'Agent': c2_agent_name, 'Name': executing_module}
-    for k, v in module_config[executing_module].items():
+    for k, v in module_config.items():
         instruct_args[k] = v
     module_response = h.interact_with_task(c2_task_name, module_instruct_instance, instruct_command, instruct_args)
     if module_response['outcome'] == 'success':

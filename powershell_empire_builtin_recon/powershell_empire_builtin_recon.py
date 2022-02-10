@@ -87,7 +87,8 @@ for executing_module in modules_list:
         print(f'{executing_module} succeeded.\n')
         module_task_id = module_response['message']['taskID']
     else:
-        print(f'{instruct_command} failed.\n')
+        print(f'{instruct_command} failed with response:\n')
+        print(module_response)
         module_task_id = None
 
     # Get the agent_shell_command results.

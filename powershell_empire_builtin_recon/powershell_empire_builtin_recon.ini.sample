@@ -1,6 +1,0 @@
-[c2_task]
-task_name = c2-http_MM_dd_YYYY_HH_mm
-agent_name = 1w2x3y4z
-
-[modules]
-modules_list = powershell/situational_awareness/network/portscan, powershell/situational_awareness/network/reverse_dns, powershell/situational_awareness/network/bloodhound, powershell/situational_awareness/network/powerview/share_finder

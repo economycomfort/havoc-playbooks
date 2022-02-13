@@ -41,6 +41,7 @@ pp = pprint.PrettyPrinter(indent=4)
 
 # Create a config parser and setup config parameters
 config = ConfigParser(allow_no_value=True)
+config.optionxform = str
 config.read('havoc-playbooks/pse_recon_bloodhound/pse_recon_bloodhound.ini')
 
 c2_task_name = config.get('c2_task', 'task_name')

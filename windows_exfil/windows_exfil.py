@@ -237,7 +237,7 @@ for command in command_list.split(', '):
                 shell_results = h.interact_with_task(c2_task_name, instruct_command, sc_instruct_instance, instruct_args)
                 if shell_results['outcome'] == 'success':
                     for shell_result in shell_results['results']:
-                        if shell_result['taskID'] == command_task_id:
+                        if 'taskID' in shell_result and shell_result['taskID'] == command_task_id:
                             results = shell_result['results']
                 else:
                     results = f'{instruct_command} failed.\n'

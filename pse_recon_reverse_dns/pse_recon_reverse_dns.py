@@ -102,7 +102,9 @@ while not results:
         module_results = h.interact_with_task(c2_task_name, instruct_command, module_instruct_instance, instruct_args)
         if module_results['outcome'] == 'success':
             for module_result in module_results['results']:
-                if module_result['taskID'] == module_task_id and 'Invoke-ReverseDNSLookup completed' in module_result['results']:
+                if 'taskID' in module_result and \
+                        module_result['taskID'] == module_task_id and \
+                        'Invoke-ReverseDNSLookup completed' in module_result['results']:
                     results = module_result['results']
         else:
             results = f'{instruct_command} failed.\n'

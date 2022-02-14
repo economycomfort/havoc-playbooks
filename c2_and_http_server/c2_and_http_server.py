@@ -303,10 +303,10 @@ while c2_listener_type != 'exit':
             'Stager config: '
         )
     )
-    print(f'\nGenerating a stager for the {c2_listener_profile} listener.')
+    print(f'\nGenerating a stager for the {c2_listener_type} listener.')
     instruct_command = 'create_stager'
     instruct_args = {
-        'Listener': f'{c2_listener_profile}'
+        'Listener': f'{c2_listener_type}'
     }
     for k, v in c2_stager.items():
         instruct_args[k] = v

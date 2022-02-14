@@ -222,21 +222,23 @@ if c2_listener_tls.lower() == 'true':
         clean_up()
 
 # Cycle through listener profiles for the powershell_empire task.
+c2_listener_type = None
 c2_listener_profile = None
-while c2_listener_profile != 'exit':
-    c2_listener_profile = input('Enter a C2 profile name or enter "exit" to initiate clean up: ')
+while c2_listener_type != 'exit':
+    c2_listener_type = input('Enter a C2 listener type or enter "exit" to initiate clean up: ')
     # Initiate clean up if "exit" entered as profile name.
-    if c2_listener_profile == 'exit':
+    if c2_listener_type == 'exit':
         print('Received "exit" input. Initiating clean up...')
         clean_up()
+    if c2_listener_type == 'http_malleable':
+        c2_listener_profile = input('Enter a C2 profile name: ')
 
     # Check for an existing agent and kill it.
     if agent_exists:
         print(f'\nSending kill command to agent with name {agent_exists[0]}.\n')
         instruct_instance = agent_exists[1]
         instruct_command = 'kill_agent'
-        agent_name = agent_exists[0]
-        instruct_args = {'Name': f'{agent_name}'}
+        instruct_args = {'Name': agent_exists[0]}
         kill_agent_response = h.interact_with_task(agent_exists[2], instruct_command, instruct_instance, instruct_args)
         if 'outcome' in kill_agent_response and kill_agent_response['outcome'] == 'failed':
             print(f'Failed to kill agent with name {agent_exists[0]}.\n')
@@ -261,7 +263,10 @@ while c2_listener_profile != 'exit':
             continue
 
     # Create a new listener.
-    print(f'\nCreating {c2_listener_profile} listener on {c2_task_name} task.')
+    if c2_listener_profile:
+        print(f'\nCreating an {c2_listener_type}:{c2_listener_profile} listener on {c2_task_name} task.')
+    else:
+        print(f'\nCreating an {c2_listener_type} listener on {c2_task_name} task.')
     if c2_listener_tls.lower() == 'true':
         c2_listener_protocol = 'https'
     else:
@@ -272,18 +277,19 @@ while c2_listener_profile != 'exit':
         c2_listener_host = f'{c2_listener_protocol}://{c2_task_ip}:{c2_listener_port}'
     instruct_command = 'create_listener'
     instruct_args = {
-        'listener_type': 'http_malleable',
-        'Profile': f'{c2_listener_profile}.profile',
-        'Name': f'{c2_listener_profile}',
+        'listener_type': f'{c2_listener_type}',
+        'Name': f'{c2_listener_type}',
         'Host': c2_listener_host,
         'Port': c2_listener_port
     }
+    if c2_listener_profile:
+        instruct_args['Profile'] = f'{c2_listener_profile}.profile'
     if c2_listener_tls.lower() == 'true':
         instruct_args['CertPath'] = '/opt/Empire/empire/server/data/'
     create_listener = h.interact_with_task(c2_task_name, instruct_command, c2_instruct_instance, instruct_args)
     if create_listener['outcome'] == 'success':
         print('\ncreate_listener succeeded.\n')
-        c2_listener_exists = [c2_task_name, c2_instruct_instance]
+        c2_listener_exists = [c2_task_name, c2_listener_type]
     else:
         print('\ncreate_listener failed with response:\n')
         print(create_listener)

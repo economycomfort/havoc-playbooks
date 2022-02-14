@@ -117,7 +117,7 @@ print(results)
 # Wait for the powershell_empire task to become idle.
 print(f'\nWaiting for powershell_empire task {c2_task_name} to become idle.')
 try:
-    h.wait_for_idle_task
+    h.wait_for_idle_task(c2_task_name)
 except KeyboardInterrupt:
     exit('Interrupting wait_for_idle_task. Exiting...')
 print(f'{c2_task_name} is now idle.')

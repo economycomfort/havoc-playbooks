@@ -76,11 +76,11 @@ def clean_up():
 
     if agent_exists:
         print(f'\nSending kill command to agent with name {agent_exists[0]}.\n')
-        instruct_instance = agent_exists[1]
+        instruct_instance = ''.join(random.choice(string.ascii_letters) for i in range(6))
         instruct_command = 'kill_agent'
         agent_name = agent_exists[0]
         instruct_args = {'Name': f'{agent_name}'}
-        kill_agent_response = h.interact_with_task(agent_exists[2], instruct_command, instruct_instance, instruct_args)
+        kill_agent_response = h.interact_with_task(agent_exists[1], instruct_command, instruct_instance, instruct_args)
         if 'outcome' in kill_agent_response and kill_agent_response['outcome'] == 'failed':
             print(f'Failed to kill agent with name {agent_exists[0]}.\n')
             print(kill_agent_response)
@@ -223,7 +223,6 @@ if c2_listener_tls.lower() == 'true':
 
 # Cycle through listener profiles for the powershell_empire task.
 c2_listener_type = None
-c2_listener_profile = None
 while c2_listener_type != 'exit':
     c2_listener_type = input('Enter a C2 listener type or enter "exit" to initiate clean up: ')
     # Initiate clean up if "exit" entered as profile name.
@@ -232,6 +231,8 @@ while c2_listener_type != 'exit':
         clean_up()
     if c2_listener_type == 'http_malleable':
         c2_listener_profile = input('Enter a C2 profile name: ')
+    else:
+        c2_listener_profile = None
 
     # Check for an existing agent and kill it.
     if agent_exists:

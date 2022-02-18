@@ -1,0 +1,17 @@
+[c2_task]
+task_name = c2-http_MM_dd_YYYY_HH_mm
+agent_name = 1w2x3y4z
+
+[invoke_wmi]
+CredID = 
+ComputerName = 
+Listener = 
+Command = 
+Obfuscate = 
+ObfuscateCommand = 
+Bypasses = 
+UserName = 
+Password = 
+UserAgent = 
+Proxy = 
+ProxyCreds = 

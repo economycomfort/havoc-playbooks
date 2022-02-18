@@ -1,11 +1,26 @@
-[c2_task]
-listener_port = 80
-listener_tls = False
+[c2_listener]
+listener_type = http_malleable
+listener_profile = sofacy
+listener_port = 443
+listener_tls = True
 domain_name = None
 cert_subj = /C=US/ST=Utah/L=Lehi/O=Your Company, Inc./OU=IT/CN=$HOST
 
-[http_server_task]
-http_port = 80
-tls = False
+[c2_stager]
+StagerName = windows/launcher_bat
+Language = powershell
+StagerRetries = 0
+OutFile = launcher.bat
+Delete = True
+Obfuscate = False
+ObfuscateCommand = Token\All\1
+UserAgent = default
+Proxy = default
+ProxyCreds = default
+Bypasses = mattifestation etw
+
+[http_service]
+http_port = 443
+tls = True
 domain_name = None
 cert_subj = /C=US/ST=Utah/L=Lehi/O=Your Company, Inc./OU=IT/CN=$HOST

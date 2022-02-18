@@ -50,20 +50,23 @@ pp = pprint.PrettyPrinter(indent=4)
 config = ConfigParser()
 config.read('havoc-playbooks/c2_and_http_server/c2_and_http_server.ini')
 
-c2_listener_port = config.get('c2_task', 'listener_port')
-c2_listener_tls = config.get('c2_task', 'listener_tls')
-c2_domain_name = config.get('c2_task', 'domain_name')
-c2_cert_subj = config.get('c2_task', 'cert_subj')
-http_server_port = config.get('http_server_task', 'http_port')
-http_server_tls = config.get('http_server_task', 'tls')
-http_server_domain_name = config.get('http_server_task', 'domain_name')
-http_server_cert_subj = config.get('http_server_task', 'cert_subj')
+c2_listener_type = config.get('c2_listener', 'listener_type')
+c2_listener_profile = config.get('c2_listener', 'listener_profile')
+c2_listener_port = config.get('c2_listener', 'listener_port')
+c2_listener_tls = config.get('c2_listener', 'listener_tls')
+c2_domain_name = config.get('c2_listener', 'domain_name')
+c2_cert_subj = config.get('c2_listener', 'cert_subj')
+c2_stager = dict(config.items('c2_stager'))
+http_server_port = config.get('http_service', 'http_port')
+http_server_tls = config.get('http_service', 'tls')
+http_server_domain_name = config.get('http_serice', 'domain_name')
+http_server_cert_subj = config.get('http_service', 'cert_subj')
 
 http_server_exists = None
-agent_exists = None
-c2_listener_exists = None
 c2_task_exists = None
+c2_listener_exists = None
 stager_exists = None
+agent_exists = None
 
 
 def clean_up():
@@ -187,7 +190,7 @@ if http_server_tls.lower() == 'true':
         print('cert_gen succeeded.\n')
     else:
         print('cert_gen failed with response:\n')
-        print(cert_gent)
+        print(cert_gen)
         print('\nExiting...')
         clean_up()
 
@@ -273,20 +276,14 @@ else:
     clean_up()
 
 # Generate a stager for the listener.
-c2_stager = ast.literal_eval(
-    input(
-        'Enter a stager configuration in the form of a dictionary like the example below.\n'
-        '{ "StagerName": "windows/launcher_bat", "Delete": "False", "OutFile": "launcher.bat" }\n'
-        'Stager config: '
-    )
-)
 print(f'\nGenerating a stager for the {c2_listener_type} listener.')
 instruct_command = 'create_stager'
 instruct_args = {
     'Listener': f'{c2_listener_type}'
 }
 for k, v in c2_stager.items():
-    instruct_args[k] = v
+    if v:
+        instruct_args[k] = v
 outfile = instruct_args['OutFile']
 stager_name = instruct_args['StagerName']
 create_stager = h.interact_with_task(c2_task_name, instruct_command, c2_instruct_instance, instruct_args)

@@ -230,17 +230,6 @@ if c2_listener_tls.lower() == 'true':
         print('\nExiting...')
         clean_up()
 
-# Setup C2 listener for the powershell_empire task.
-c2_listener_type = input('Enter a C2 listener type or enter "exit" to initiate clean up: ')
-# Initiate clean up if "exit" entered as profile name.
-if c2_listener_type == 'exit':
-    print('Received "exit" input. Initiating clean up...')
-    clean_up()
-if c2_listener_type == 'http_malleable':
-    c2_listener_profile = input('Enter a C2 profile name: ')
-else:
-    c2_listener_profile = None
-
 # Create a new listener.
 if c2_listener_profile:
     print(f'\nCreating an {c2_listener_type}:{c2_listener_profile} listener on {c2_task_name} task.')

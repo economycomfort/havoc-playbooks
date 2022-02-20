@@ -24,3 +24,6 @@ http_port = 443
 tls = True
 domain_name = None
 cert_subj = /C=US/ST=Utah/L=Lehi/O=Your Company, Inc./OU=IT/CN=$HOST
+
+[c2_client]
+client_ip = 192.168.1.100

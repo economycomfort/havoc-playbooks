@@ -59,7 +59,7 @@ c2_cert_subj = config.get('c2_listener', 'cert_subj')
 c2_stager = dict(config.items('c2_stager'))
 http_server_port = config.get('http_service', 'http_port')
 http_server_tls = config.get('http_service', 'tls')
-http_server_domain_name = config.get('http_serice', 'domain_name')
+http_server_domain_name = config.get('http_service', 'domain_name')
 http_server_cert_subj = config.get('http_service', 'cert_subj')
 
 http_server_exists = None

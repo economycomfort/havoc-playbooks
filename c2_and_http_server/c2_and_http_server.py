@@ -47,7 +47,8 @@ sdate = d.strftime('%m-%d-%Y-%H-%M')
 pp = pprint.PrettyPrinter(indent=4)
 
 # Create a config parser and setup config parameters
-config = ConfigParser()
+config = ConfigParser(allow_no_value=True)
+config.optionxform = str
 config.read('havoc-playbooks/c2_and_http_server/c2_and_http_server.ini')
 
 c2_listener_type = config.get('c2_listener', 'listener_type')

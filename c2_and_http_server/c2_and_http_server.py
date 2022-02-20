@@ -327,7 +327,7 @@ else:
     http_server_url = f'{protocol}://www.{http_server_domain_name}/{outfile}'
 print(
     f'\nWaiting for an agent connection on task {c2_task_name}.\n'
-    f'\nThe agent launcher can be downloaded from the HTTP server here:'
+    f'\nThe agent launcher can be downloaded from the HTTP server.'
     f'\nHTTP server URL: {http_server_url}'
 )
 agent_name = None
@@ -346,7 +346,7 @@ if agent_exists:
         f'\nC2 IP address: {c2_task_ip}'
         f'\nC2 listener: {c2_listener_host}'
         f'\nAgent name: {agent_name}'
-        '\n\nPlaybook will halt until prompted to proceed with next listener profile.'
+        '\n\nPlaybook will halt until prompted to proceed with clean up.'
         )
     print('\nPress enter to proceed.')
     input()

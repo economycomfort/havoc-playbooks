@@ -1,0 +1,20 @@
+[c2_task]
+task_name = c2-http_MM_dd_YYYY_HH_mm
+agent_name = 1w2x3y4z
+
+[bloodhound]
+CollectionMethod = Default
+Threads = 20
+Throttle = 1000
+CSVFolder = 
+CSVPrefix = 
+ComputerADSpath = 
+ComputerName = 
+Domain = 
+DomainController = 
+GlobalCatalog = 
+SearchForest = 
+SkipGCDeconfliction = 
+URI = 
+UserADSPath = 
+UserPass = 

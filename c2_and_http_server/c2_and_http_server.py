@@ -133,7 +133,7 @@ portgroups = [f'http_server_{sdate}']
 if http_server_domain_name == 'None':
     http_server_task_host_name = 'None'
 else:
-    http_server_task_host_name = 'www'
+    http_server_task_host_name = 'downloads'
 print(f'\nLaunching http_server task with name {http_server_task_name}.')
 http_server_task = h.task_startup(
     http_server_task_name,

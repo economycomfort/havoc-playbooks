@@ -117,14 +117,14 @@ def clean_up():
 print(f'\nCreating a portgroup for the HTTP server.')
 h.create_portgroup(f'http_server_{sdate}', f'Allows port {http_server_port} traffic')
 print(f'\nAdding portgroup rule to allow C2 agent IP {c2_client_ip} to reach port {http_server_port}.\n')
-h.update_portgroup_rule(f'http_server_{sdate}', 'add', f'{c2_client_ip}/32', http_server_port, 'tcp')
+h.update_portgroup_rule(f'http_server_{sdate}', 'add', f'{c2_client_ip}', http_server_port, 'tcp')
 http_portgroup_exists = f'http_server_{sdate}'
 
 # Create a portgroup for the powershell_empire task's listener.
 print(f'\nCreating a portgroup for the C2 listener.')
 h.create_portgroup(f'c2_server_{sdate}', f'Allows port {c2_listener_port} traffic')
 print(f'\nAdding portgroup rule to allow C2 agent IP {c2_client_ip} to reach the C2 listener on port {c2_listener_port}.\n')
-h.update_portgroup_rule(f'c2_server_{sdate}', 'add', f'{c2_client_ip}/32', c2_listener_port, 'tcp')
+h.update_portgroup_rule(f'c2_server_{sdate}', 'add', f'{c2_client_ip}', c2_listener_port, 'tcp')
 c2_portgroup_exists = f'c2_server_{sdate}'
 
 # Launch an http_server task.

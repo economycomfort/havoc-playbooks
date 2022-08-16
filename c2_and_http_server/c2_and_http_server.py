@@ -177,21 +177,38 @@ http_instruct_instance = ''.join(random.choice(string.ascii_letters) for i in ra
 # If TLS listener requested for http_server, generate a certificate.
 if http_server_tls.lower() == 'true':
     print('\nGenerating a certificate to support a TLS web service.')
-    subj = None
+    instruct_args = None
     if http_server_domain_name != 'None':
-        subj = re.sub('\$HOST', f'www.{http_server_domain_name}', http_server_cert_subj)
+        print('HTTP server domain is configured. Requesting a Let\'s Encrypt certificate...\n')
+        print('Temporarily opening port 80 for certificate request verification.\n')
+        h.update_portgroup_rule(f'http_server_{sdate}', 'add', '0.0.0.0/0', '80', 'tcp')
+        print('Starting certificate request.\n')
+        http_domain = f'{http_server_task_host_name}.{http_server_domain_name}'
+        instruct_args = {'domain': http_domain}
+        instruct_command = 'cert_gen'
+        cert_gen = h.interact_with_task(http_server_task_name, instruct_command, http_instruct_instance, instruct_args)
+        if cert_gen['outcome'] == 'success':
+            print('HTTP server certificate request succeeded.\n')
+            print('Closing port 80.\n')
+            h.update_portgroup_rule(f'http_server_{sdate}', 'remove', '0.0.0.0/0', '80', 'tcp')
+        else:
+            print('HTTP server certificate request failed with response:\n')
+            print(cert_gen)
+            print('\nExiting...')
+            clean_up()
     if http_server_domain_name == 'None':
-        subj = re.sub('\$HOST', f'{http_server_task_ip}', http_server_cert_subj)
-    instruct_command = 'cert_gen'
-    instruct_args = {'subj': subj}
-    cert_gen = h.interact_with_task(http_server_task_name, instruct_command, http_instruct_instance, instruct_args)
-    if cert_gen['outcome'] == 'success':
-        print('cert_gen succeeded.\n')
-    else:
-        print('cert_gen failed with response:\n')
-        print(cert_gen)
-        print('\nExiting...')
-        clean_up()
+        print('No HTTP server domain configured. Creating a self-signed certificate...\n')
+        http_subj = re.sub('\$HOST', f'{http_server_task_ip}', http_server_cert_subj)
+        instruct_args = {'subj': http_subj}
+        instruct_command = 'cert_gen'
+        cert_gen = h.interact_with_task(http_server_task_name, instruct_command, http_instruct_instance, instruct_args)
+        if cert_gen['outcome'] == 'success':
+            print('HTTP server self-signed certificate creation succeeded.\n')
+        else:
+            print('HTTP server self-signed certificate creation failed with response:\n')
+            print(cert_gen)
+            print('\nExiting...')
+            clean_up()
 
 # Ask the http_server task to start a web service.
 print(f'\nStarting a web service on {http_server_task_name}.')
@@ -213,21 +230,38 @@ c2_instruct_instance = ''.join(random.choice(string.ascii_letters) for i in rang
 # If TLS listener requested for powershell_empire listener, generate a certificate.
 if c2_listener_tls.lower() == 'true':
     print('\nGenerating a certificate to support a TLS C2 listener.')
-    subj = None
+    instruct_args = None
     if c2_domain_name != 'None':
-        subj = re.sub('\$HOST', f'{c2_task_host_name}.{c2_domain_name}', c2_cert_subj)
+        print('C2 listener domain is configured. Requesting a Let\'s Encrypt certificate...\n')
+        print('Temporarily opening port 80 for certificate request verification.\n')
+        h.update_portgroup_rule(f'c2_server_{sdate}', 'add', '0.0.0.0/0', '80', 'tcp')
+        print('Starting certificate request.\n')
+        c2_domain = f'{c2_task_host_name}.{c2_domain_name}'
+        instruct_args = {'domain': c2_domain}
+        instruct_command = 'cert_gen'
+        cert_gen = h.interact_with_task(c2_task_name, instruct_command, c2_instruct_instance, instruct_args)
+        if cert_gen['outcome'] == 'success':
+            print('Certificate request succeeded.\n')
+            print('Closing port 80.\n')
+            h.update_portgroup_rule(f'c2_server_{sdate}', 'remove', '0.0.0.0/0', '80', 'tcp')
+        else:
+            print('Certificate request failed with response:\n')
+            print(cert_gen)
+            print('\nExiting...')
+            clean_up()
     if c2_domain_name == 'None':
-        subj = re.sub('\$HOST', f'{c2_task_ip}', c2_cert_subj)
-    instruct_command = 'cert_gen'
-    instruct_args = {'subj': subj}
-    cert_gen = h.interact_with_task(c2_task_name, instruct_command, c2_instruct_instance, instruct_args)
-    if cert_gen['outcome'] == 'success':
-        print('cert_gen succeeded.\n')
-    else:
-        print('cert_gen failed with response:\n')
-        print(cert_gen)
-        print('\nExiting...')
-        clean_up()
+        print('No C2 listener domain configured. Creating a self-signed certificate...\n')
+        c2_subj = re.sub('\$HOST', f'{c2_task_ip}', c2_cert_subj)
+        instruct_args = {'subj': c2_subj}
+        instruct_command = 'cert_gen'
+        cert_gen = h.interact_with_task(c2_task_name, instruct_command, c2_instruct_instance, instruct_args)
+        if cert_gen['outcome'] == 'success':
+            print('C2 listener self-signed certificate creation succeeded.\n')
+        else:
+            print('C2 listener self-signed certificate creation failed with response:\n')
+            print(cert_gen)
+            print('\nExiting...')
+            clean_up()
 
 # Create a new listener.
 if c2_listener_profile:
@@ -344,7 +378,8 @@ if agent_exists:
         '\nAn agent is connected. '
         f'\nC2 task name: {c2_task_name}'
         f'\nC2 IP address: {c2_task_ip}'
-        f'\nC2 listener: {c2_listener_host}'
+        f'\nC2 URL: {c2_listener_host}'
+        f'\nC2 listener name: {c2_listener_type}'
         f'\nAgent name: {agent_name}'
         '\n\nPlaybook will halt until prompted to proceed with clean up.'
         )

@@ -31,11 +31,13 @@ if profile:
     secret = config.get(profile, 'SECRET')
     api_region = config.get(profile, 'API_REGION')
     api_domain_name = config.get(profile, 'API_DOMAIN_NAME')
+    campaign_admin_email = config.get(profile, 'CAMPAIGN_ADMIN_EMAIL')
 else:
     api_key = config.get('default', 'API_KEY')
     secret = config.get('default', 'SECRET')
     api_region = config.get('default', 'API_REGION')
     api_domain_name = config.get('default', 'API_DOMAIN_NAME')
+    campaign_admin_email = config.get('default', 'CAMPAIGN_ADMIN_EMAIL')
 
 h = havoc.Connect(api_region, api_domain_name, api_key, secret)
 
@@ -184,7 +186,7 @@ if http_server_tls.lower() == 'true':
         h.update_portgroup_rule(f'http_server_{sdate}', 'add', '0.0.0.0/0', '80', 'tcp')
         print('Starting certificate request.\n')
         http_domain = f'{http_server_task_host_name}.{http_server_domain_name}'
-        instruct_args = {'domain': http_domain}
+        instruct_args = {'domain': http_domain, 'email': campaign_admin_email}
         instruct_command = 'cert_gen'
         cert_gen = h.interact_with_task(http_server_task_name, instruct_command, http_instruct_instance, instruct_args)
         if cert_gen['outcome'] == 'success':
@@ -237,7 +239,7 @@ if c2_listener_tls.lower() == 'true':
         h.update_portgroup_rule(f'c2_server_{sdate}', 'add', '0.0.0.0/0', '80', 'tcp')
         print('Starting certificate request.\n')
         c2_domain = f'{c2_task_host_name}.{c2_domain_name}'
-        instruct_args = {'domain': c2_domain}
+        instruct_args = {'domain': c2_domain, 'email': campaign_admin_email}
         instruct_command = 'cert_gen'
         cert_gen = h.interact_with_task(c2_task_name, instruct_command, c2_instruct_instance, instruct_args)
         if cert_gen['outcome'] == 'success':

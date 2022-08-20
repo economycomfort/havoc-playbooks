@@ -360,7 +360,7 @@ else:
 if http_server_task_host_name == 'None':
     http_server_url = f'{protocol}://{http_server_task_ip}/{outfile}'
 else:
-    http_server_url = f'{protocol}://www.{http_server_domain_name}/{outfile}'
+    http_server_url = f'{protocol}://{http_server_task_host_name}.{http_server_domain_name}/{outfile}'
 print(
     f'\nWaiting for an agent connection on task {c2_task_name}.\n'
     f'\nThe agent launcher can be downloaded from the HTTP server.'

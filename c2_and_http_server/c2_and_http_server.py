@@ -135,7 +135,7 @@ portgroups = [f'http_server_{sdate}']
 if http_server_domain_name == 'None':
     http_server_task_host_name = 'None'
 else:
-    http_server_task_host_name = 'downloads-' + ''.join(random.choice(string.ascii_letters) for i in range(5))
+    http_server_task_host_name = 'downloads-' + ''.join(random.choice(string.ascii_lowercase) for i in range(5))
 print(f'\nLaunching http_server task with name {http_server_task_name}.')
 http_server_task = h.task_startup(
     http_server_task_name,
@@ -157,7 +157,7 @@ portgroups = [f'c2_server_{sdate}']
 if c2_domain_name == 'None':
     c2_task_host_name = 'None'
 else:
-    c2_task_host_name = 'c2-' + ''.join(random.choice(string.ascii_letters) for i in range(5))
+    c2_task_host_name = 'c2-' + ''.join(random.choice(string.ascii_lowercase) for i in range(5))
 print(f'\nLaunching powershell_empire task with name {c2_task_name}.')
 c2_task = h.task_startup(
     c2_task_name,

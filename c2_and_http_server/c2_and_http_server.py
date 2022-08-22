@@ -57,11 +57,13 @@ c2_listener_type = config.get('c2_listener', 'listener_type')
 c2_listener_profile = config.get('c2_listener', 'listener_profile')
 c2_listener_port = config.get('c2_listener', 'listener_port')
 c2_listener_tls = config.get('c2_listener', 'listener_tls')
+c2_test_certificate = config.get('c2_listener', 'test_certificate')
 c2_domain_name = config.get('c2_listener', 'domain_name')
 c2_cert_subj = config.get('c2_listener', 'cert_subj')
 c2_stager = dict(config.items('c2_stager'))
 http_server_port = config.get('http_service', 'http_port')
 http_server_tls = config.get('http_service', 'tls')
+http_server_test_certificate = config.get('http_service', 'test_certificate')
 http_server_domain_name = config.get('http_service', 'domain_name')
 http_server_cert_subj = config.get('http_service', 'cert_subj')
 c2_client_ip = config.get('c2_client', 'client_ip')
@@ -186,7 +188,11 @@ if http_server_tls.lower() == 'true':
         h.update_portgroup_rule(f'http_server_{sdate}', 'add', '0.0.0.0/0', '80', 'tcp')
         print('Starting certificate request.\n')
         http_domain = f'{http_server_task_host_name}.{http_server_domain_name}'
-        instruct_args = {'domain': http_domain, 'email': campaign_admin_email}
+        if http_server_test_certificate.lower() == 'true':
+            http_test_cert = 'True'
+        else:
+            http_test_cert = 'False'
+        instruct_args = {'domain': http_domain, 'email': campaign_admin_email, 'test_cert': http_test_cert}
         instruct_command = 'cert_gen'
         cert_gen = h.interact_with_task(http_server_task_name, instruct_command, http_instruct_instance, instruct_args)
         if cert_gen['outcome'] == 'success':
@@ -239,7 +245,11 @@ if c2_listener_tls.lower() == 'true':
         h.update_portgroup_rule(f'c2_server_{sdate}', 'add', '0.0.0.0/0', '80', 'tcp')
         print('Starting certificate request.\n')
         c2_domain = f'{c2_task_host_name}.{c2_domain_name}'
-        instruct_args = {'domain': c2_domain, 'email': campaign_admin_email}
+        if c2_test_certificate.lower() == 'true':
+            c2_test_cert = 'True'
+        else:
+            c2_test_cert = 'False'
+        instruct_args = {'domain': c2_domain, 'email': campaign_admin_email, 'test_cert': c2_test_cert}
         instruct_command = 'cert_gen'
         cert_gen = h.interact_with_task(c2_task_name, instruct_command, c2_instruct_instance, instruct_args)
         if cert_gen['outcome'] == 'success':

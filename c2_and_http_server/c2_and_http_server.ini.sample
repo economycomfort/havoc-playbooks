@@ -3,6 +3,7 @@ listener_type = http_malleable
 listener_profile = sofacy
 listener_port = 443
 listener_tls = True
+test_certificate = False
 domain_name = None
 cert_subj = /C=US/ST=Utah/L=Lehi/O=Your Company, Inc./OU=IT/CN=$HOST
 
@@ -22,6 +23,7 @@ Bypasses = mattifestation etw
 [http_service]
 http_port = 443
 tls = True
+test_certificate = False
 domain_name = None
 cert_subj = /C=US/ST=Utah/L=Lehi/O=Your Company, Inc./OU=IT/CN=$HOST
 

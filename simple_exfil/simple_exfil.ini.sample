@@ -1,7 +1,9 @@
 [exfil_task]
-exfil_type = https
-exfil_port = 443
 exfil_outfile = exfil_file.zip
+exfil_type = http
+exfil_port = 443
+tls = True
+test_certificate = False
 domain_name = None
 cert_subj = /C=US/ST=Utah/L=Lehi/O=Your Company, Inc./OU=IT/CN=$HOST
 

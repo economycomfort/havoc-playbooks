@@ -8,13 +8,14 @@ domain_name = None
 cert_subj = /C=US/ST=Utah/L=Lehi/O=Your Company, Inc./OU=IT/CN=$HOST
 
 [c2_stager]
-StagerName = windows/launcher_bat
+StagerName = multi/launcher
 Language = powershell
 StagerRetries = 0
-OutFile = launcher.bat
-Delete = True
+OutFile = launcher.ps1
+Base64 = False
 Obfuscate = False
 ObfuscateCommand = Token\All\1
+SafeChecks = False
 UserAgent = default
 Proxy = default
 ProxyCreds = default

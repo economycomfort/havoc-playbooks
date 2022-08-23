@@ -30,11 +30,13 @@ if profile:
     secret = config.get(profile, 'SECRET')
     api_region = config.get(profile, 'API_REGION')
     api_domain_name = config.get(profile, 'API_DOMAIN_NAME')
+    campaign_admin_email = config.get(profile, 'CAMPAIGN_ADMIN_EMAIL')
 else:
     api_key = config.get('default', 'API_KEY')
     secret = config.get('default', 'SECRET')
     api_region = config.get('default', 'API_REGION')
     api_domain_name = config.get('default', 'API_DOMAIN_NAME')
+    campaign_admin_email = config.get('default', 'CAMPAIGN_ADMIN_EMAIL')
 
 h = havoc.Connect(api_region, api_domain_name, api_key, secret)
 
@@ -49,11 +51,13 @@ pp = pprint.PrettyPrinter(indent=4)
 config = ConfigParser()
 config.read('havoc-playbooks/simple_exfil/simple_exfil.ini')
 
+exfil_outfile = config.get('exfil_task', 'exfil_outfile')
 exfil_type = config.get('exfil_task', 'exfil_type')
 exfil_port = config.get('exfil_task', 'exfil_port')
-exfil_outfile = config.get('exfil_task', 'exfil_outfile')
+exfil_tls = config.get('exfil_task', 'tls')
+exfil_task_test_certificate = config.get('exfil_task', 'test_certificate')
 exfil_task_domain_name = config.get('exfil_task', 'domain_name')
-exfil_subj = config.get('exfil_task', 'cert_subj')
+exfil_cert_subj = config.get('exfil_task', 'cert_subj')
 c2_task_name = config.get('c2_task', 'task_name')
 c2_agent_name = config.get('c2_task', 'agent_name')
 command_list = config.get('c2_task', 'command_list')
@@ -129,7 +133,7 @@ portgroups = [f'exfil_{exfil_type}_{sdate}']
 if exfil_task_domain_name == 'None':
     exfil_task_host_name = 'None'
 else:
-    exfil_task_host_name = exfil_type
+    exfil_task_host_name = 'exfil-' + ''.join(random.choice(string.ascii_lowercase) for i in range(5))
 print(f'\nLaunching exfil task with name {exfil_task_name}.')
 exfil_task = h.task_startup(
     exfil_task_name,
@@ -148,16 +152,56 @@ print(f'\nDomain name - {exfil_task_domain_name}')
 # Use a random string for the exfil_listener instruct_instance.
 exfil_instruct_instance = ''.join(random.choice(string.ascii_letters) for i in range(6))
 
+# If TLS listener requested for exfil service, generate a certificate.
+if exfil_type.lower() == 'http' and exfil_tls.lower() == 'true':
+    print('\nGenerating a certificate to support a TLS web service.')
+    instruct_args = None
+    if exfil_task_domain_name != 'None':
+        print('Exfil task domain is configured. Requesting a Let\'s Encrypt certificate...\n')
+        print('Temporarily opening port 80 for certificate request verification.\n')
+        h.update_portgroup_rule(f'exfil_{exfil_type}_{sdate}', 'add', '0.0.0.0/0', '80', 'tcp')
+        print('Starting certificate request.\n')
+        exfil_domain = f'{exfil_task_host_name}.{exfil_task_domain_name}'
+        if exfil_task_test_certificate.lower() == 'true':
+            exfil_test_cert = 'True'
+        else:
+            exfil_test_cert = 'False'
+        instruct_args = {'domain': exfil_domain, 'email': campaign_admin_email, 'test_cert': exfil_test_cert}
+        instruct_command = 'cert_gen'
+        cert_gen = h.interact_with_task(exfil_task_name, instruct_command, exfil_instruct_instance, instruct_args)
+        if cert_gen['outcome'] == 'success':
+            print('Certificate request succeeded.\n')
+            print('Closing port 80.\n')
+            h.update_portgroup_rule(f'exfil_{exfil_type}_{sdate}', 'remove', '0.0.0.0/0', '80', 'tcp')
+        else:
+            print('Certificate request failed with response:\n')
+            print(cert_gen)
+            print('\nExiting...')
+            clean_up()
+    if exfil_task_domain_name == 'None':
+        print('No Exfil task domain configured. Creating a self-signed certificate...\n')
+        exfil_subj = re.sub('\$HOST', f'{exfil_task_ip}', exfil_cert_subj)
+        instruct_args = {'subj': exfil_subj}
+        instruct_command = 'cert_gen'
+        cert_gen = h.interact_with_task(exfil_task_name, instruct_command, exfil_instruct_instance, instruct_args)
+        if cert_gen['outcome'] == 'success':
+            print('Self-signed certificate creation succeeded.\n')
+        else:
+            print('Self-signed certificate creation failed with response:\n')
+            print(cert_gen)
+            print('\nExiting...')
+            clean_up()
+
 # Ask the exfil_task to start an exfil listener service.
-print(f'\nStarting an exfil listener service on {exfil_task_name}.')
-instruct_args = {'listen_port': int(exfil_port), 'subj': exfil_subj}
-instruct_command = 'start_https_exfil_server'
+print(f'\nStarting an {exfil_type} exfil listener service on {exfil_task_name}.')
+instruct_args = {'listen_port': int(exfil_port)}
+instruct_command = f'start_{exfil_type}_exfil_server'
 exfil_listener = h.interact_with_task(exfil_task_name, instruct_command, exfil_instruct_instance, instruct_args)
 if exfil_listener['outcome'] == 'success':
-    print('\nstart_https_exfil_server succeeded.\n')
+    print(f'\nstart_{exfil_type}_exfil_server succeeded.\n')
     exfil_service_exists = [exfil_task_name, exfil_instruct_instance]
 else:
-    print('\nstart_https_exfil_server failed. Exfil listener output:\n')
+    print(f'\nstart_{exfil_type}_exfil_server failed. Exfil listener output:\n')
     print(exfil_listener)
     print('\nExiting...\n')
     clean_up()

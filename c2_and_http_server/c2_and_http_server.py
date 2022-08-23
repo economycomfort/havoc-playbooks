@@ -20,24 +20,24 @@ init_args = init_parser.parse_args()
 
 profile = init_args.profile
 
-# Load the configuration file
-config = ConfigParser()
-config_file = os.path.expanduser('~/.havoc/config')
-config.read(config_file)
+# Load the ./HAVOC configuration file
+havoc_config = ConfigParser()
+havoc_config_file = os.path.expanduser('~/.havoc/config')
+havoc_config.read(havoc_config_file)
 
 # Get api_key and secret_key
 if profile:
-    api_key = config.get(profile, 'API_KEY')
-    secret = config.get(profile, 'SECRET')
-    api_region = config.get(profile, 'API_REGION')
-    api_domain_name = config.get(profile, 'API_DOMAIN_NAME')
-    campaign_admin_email = config.get(profile, 'CAMPAIGN_ADMIN_EMAIL')
+    api_key = havoc_config.get(profile, 'API_KEY')
+    secret = havoc_config.get(profile, 'SECRET')
+    api_region = havoc_config.get(profile, 'API_REGION')
+    api_domain_name = havoc_config.get(profile, 'API_DOMAIN_NAME')
+    campaign_admin_email = havoc_config.get(profile, 'CAMPAIGN_ADMIN_EMAIL')
 else:
-    api_key = config.get('default', 'API_KEY')
-    secret = config.get('default', 'SECRET')
-    api_region = config.get('default', 'API_REGION')
-    api_domain_name = config.get('default', 'API_DOMAIN_NAME')
-    campaign_admin_email = config.get('default', 'CAMPAIGN_ADMIN_EMAIL')
+    api_key = havoc_config.get('default', 'API_KEY')
+    secret = havoc_config.get('default', 'SECRET')
+    api_region = havoc_config.get('default', 'API_REGION')
+    api_domain_name = havoc_config.get('default', 'API_DOMAIN_NAME')
+    campaign_admin_email = havoc_config.get('default', 'CAMPAIGN_ADMIN_EMAIL')
 
 h = havoc.Connect(api_region, api_domain_name, api_key, secret)
 

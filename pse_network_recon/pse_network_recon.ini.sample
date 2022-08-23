@@ -1,0 +1,172 @@
+[c2_task]
+task_name = c2-http_MM_dd_YYYY_HH_mm
+agent_name = 1w2x3y4z
+
+[portscan]
+Enable = True
+Module = powershell/situational_awareness/network/portscan
+AllformatsOut = 
+ExcludeHosts = 
+GrepOut = 
+HostFile = 
+Hosts = 
+Open = 
+OutputFunction = 
+PingOnly = 
+Ports = 
+ReadableOut = 
+SkipDiscovery = 
+TopPorts = 
+XmlOut = 
+
+[reverse_dns]
+Enable = True
+Module = powershell/situational_awareness/network/reverse_dns
+CIDR = 
+OutputFunction = 
+Range = 
+
+[share_finder]
+Enable = True
+Module = powershell/situational_awareness/network/powerview/share_finder
+CheckShareAccess = 
+ComputerLDAPFilter = 
+ComputerName = 
+ComputerOperatingSystem = 
+ComputerSearchBase = 
+ComputerServicePack = 
+ComputerSiteName = 
+Delay = 
+Jitter = 
+OutputFunction = 
+ResultPageSize = 
+SearchScope = 
+Server = 
+ServerTimeLimit = 
+Threads = 
+Tombstone = 
+
+[bloodhound]
+Enable = True
+Module = powershell/situational_awareness/network/bloodhound
+CollectionMethod = Default
+Threads = 20
+Throttle = 1000
+CSVFolder = 
+CSVPrefix = 
+ComputerADSpath = 
+ComputerName = 
+Domain = 
+DomainController = 
+GlobalCatalog = 
+SearchForest = 
+SkipGCDeconfliction = 
+URI = 
+UserADSPath = 
+UserPass = 
+
+[process_hunter]
+Enable = True
+Module = powershell/situational_awareness/network/powerview/process_hunter
+ComputerName = 
+ComputerDomain = 
+ComputerLDAPFilter = 
+ComputerSearchBase = 
+ComputerUnconstrained = 
+ComputerOperatingSystem = 
+ComputerServicePack = 
+ComputerSiteName = 
+ProcessName = 
+UserGroupIdentity = 
+UserAdminCount = 
+UserIdentity = 
+UserLDAPFilter = 
+UserSearchBase = 
+StopOnSuccess = 
+Delay = 
+Domain = 
+Server = 
+SearchScope = 
+ResultPageSize = 
+ServerTimeLimit = 
+Tombstone = 
+Jitter = 
+Threads = 
+
+[user_hunter]
+Enable = True
+Module = powershell/situational_awareness/network/powerview/user_hunter
+ComputerName = 
+ComputerLDAPFilter = 
+ComputerSearchBase = 
+ComputerOperatingSystem = 
+ComputerServicePack = 
+ComputerSiteName = 
+UserGroupIdentity = 
+UserIdentity = 
+UserDomain = 
+UserLDAPFilter = 
+UserAllowDelegation = 
+UserAdminCount = 
+UserSearchBase = 
+StopOnSuccess = 
+CheckAccess = 
+Delay = 
+Domain = 
+Server = 
+SearchScope = 
+ResultPageSize = 
+ServerTimeLimit = 
+Tombstone = 
+Jitter = 
+Stealth = 
+StealthSource = 
+ShowAll = 
+Threads = 
+
+[find_localadmin_access]
+Enable = True
+Module = powershell/situational_awareness/network/powerview/find_localadmin_access
+ComputerName = 
+ComputerDomain = 
+ComputerLDAPFilter = 
+ComputerSearchBase = 
+ComputerOperatingSystem = 
+ComputerServicePack = 
+ComputerSiteName = 
+CheckShareAccess = 
+Server = 
+SearchScope = 
+ResultPageSize = 
+ServerTimeLimit = 
+Tombstone = 
+
+[get_domain_controller]
+Enable = True
+Module = powershell/situational_awareness/network/powerview/get_domain_controller
+Domain = 
+Server = 
+LDAP = 
+
+[get_domain_policy]
+Enable = True
+Module = powershell/situational_awareness/network/powerview/get_domain_policy
+Policy = Domain
+Domain = 
+Server = 
+ServerTimeLimit = 
+
+[get_cached_rdpconnection]
+Enable = True
+Module = powershell/situational_awareness/network/powerview/get_domain_rdpconnection
+ComputerName = 
+
+[get_loggedon]
+Enable = True
+Module = powershell/situational_awareness/network/powerview/get_loggedon
+ComputerName = 
+
+[get_session]
+Enable = True
+Module = powershell/situational_awareness/network/powerview/get_session
+ComputerName = 

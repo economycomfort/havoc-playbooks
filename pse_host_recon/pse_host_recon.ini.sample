@@ -19,3 +19,9 @@ ComputerName =
 [get_uaclevel]
 Enable = True
 Module = powershell/situational_awareness/host/get_uaclevel
+
+[winenum]
+Enable = True
+Module = powershell/situational_awareness/host/winenum
+Keywords = 
+UserName = 

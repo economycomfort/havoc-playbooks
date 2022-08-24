@@ -80,7 +80,7 @@ def execute_module(executing_module, module_config):
             instruct_args[k] = v
     module_response = h.interact_with_task(c2_task_name, instruct_command, module_instruct_instance, instruct_args)
     if module_response['outcome'] == 'success':
-        print(f'{executing_module} succeeded.\n')
+        print(f'{executing_module} started.\n')
         module_task_id = module_response['message']['taskID']
     else:
         print(f'{instruct_command} failed with response:\n')

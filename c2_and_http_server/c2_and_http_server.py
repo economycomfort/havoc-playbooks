@@ -380,8 +380,13 @@ agent_name = None
 try:
     wait_for_c2_response = h.wait_for_c2(c2_task_name)
     agent_name = wait_for_c2_response['agent_info']['name']
+    agent_hostname = wait_for_c2_response['agent_info']['hostname']
     agent_internal_ip = wait_for_c2_response['agent_info']['internal_ip']
     agent_external_ip = wait_for_c2_response['agent_info']['external_ip']
+    agent_os_details = wait_for_c2_response['agent_info']['os_details']
+    agent_arch = wait_for_c2_response['agent_info']['architecture']
+    agent_username = wait_for_c2_response['agent_info']['username']
+    agent_high_integrity = wait_for_c2_response['agent_info']['high_integrity']
     agent_exists = [agent_name, c2_task_name]
     print(f'Agent connected with name {agent_name}\n')
 except KeyboardInterrupt:
@@ -395,8 +400,13 @@ if agent_exists:
         f'\nC2 URL: {c2_listener_host}'
         f'\nC2 listener name: {c2_listener_type}'
         f'\nAgent name: {agent_name}'
+        f'\nAgent hostname: {agent_hostname}'
         f'\nAgent internal IP: {agent_internal_ip}'
         f'\nAgent external IP: {agent_external_ip}'
+        f'\nAgent OS details: {agent_os_details}'
+        f'\nAgent system architecture: {agent_arch}'
+        f'\nAgent username: {agent_username}'
+        f'\nAgent is high integrity (0=no, 1=yes): {agent_high_integrity}'
         '\n\nPlaybook will halt until prompted to proceed with clean up.'
         )
     print('\nPress enter to proceed.')

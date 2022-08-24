@@ -122,14 +122,14 @@ for section in config.sections():
             instruct_instance, task_id = execute_module(module, module_config)
             if task_id is not None:
                 get_module_results(module, instruct_instance, task_id)
-
-# Wait for the powershell_empire task to become idle.
-print(f'\nWaiting for powershell_empire task {c2_task_name} to become idle.')
-try:
-    h.wait_for_idle_task(c2_task_name)
-except KeyboardInterrupt:
-    exit('Interrupting wait_for_idle_task. Exiting...')
-print(f'{c2_task_name} is now idle.')
+            
+            # Wait for the powershell_empire task to become idle.
+            print(f'\nWaiting for powershell_empire task {c2_task_name} to become idle.')
+            try:
+                h.wait_for_idle_task(c2_task_name)
+            except KeyboardInterrupt:
+                exit('Interrupting wait_for_idle_task. Exiting...')
+            print(f'{c2_task_name} is now idle.')
 
 # Playbook is complete.
 exit('\nPlaybook operation completed. Exiting...')

@@ -98,9 +98,10 @@ def get_module_results(executing_module, module_instruct_instance, module_task_i
             module_results = h.interact_with_task(c2_task_name, instruct_command, module_instruct_instance, instruct_args)
             if module_results['outcome'] == 'success':
                 for module_result in module_results['results']:
-                    if 'taskID' in module_result and module_result['taskID'] == module_task_id:
-                        if module_result['results'] and module_result['results'] is not None:
-                            results = module_result['results']
+                    if 'taskID' in module_result and module_result['taskID'] == module_task_id and 'results' in module_result:
+                        tmp_results = module_result['results']
+                        if tmp_results is not None and 'Job started:' not in tmp_results:
+                            results = tmp_results
             else:
                 results = f'{instruct_command} failed.\n'
             if not results:
@@ -122,13 +123,13 @@ for section in config.sections():
             if task_id is not None:
                 get_module_results(module, instruct_instance, task_id)
 
-# Wait for the powershell_empire task to become idle.
-print(f'\nWaiting for powershell_empire task {c2_task_name} to become idle.')
-try:
-    h.wait_for_idle_task(c2_task_name)
-except KeyboardInterrupt:
-    exit('Interrupting wait_for_idle_task. Exiting...')
-print(f'{c2_task_name} is now idle.')
+            # Wait for the powershell_empire task to become idle.
+            print(f'\nWaiting for powershell_empire task {c2_task_name} to become idle.')
+            try:
+                h.wait_for_idle_task(c2_task_name)
+            except KeyboardInterrupt:
+                exit('Interrupting wait_for_idle_task. Exiting...')
+            print(f'{c2_task_name} is now idle.')
 
 # Playbook is complete.
 exit('\nPlaybook operation completed. Exiting...')

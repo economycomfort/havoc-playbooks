@@ -19,18 +19,3 @@ ComputerName =
 [get_uaclevel]
 Enable = True
 Module = powershell/situational_awareness/host/get_uaclevel
-
-[hostrecon]
-Enable = True
-Module = powershell/situational_awareness/host/hostrecon
-
-[seatbelt]
-Enable = True
-Module = powershell/situational_awareness/host/seatbelt
-Command = 
-Group = All
-Computername = 
-Username = 
-Password = 
-Full = True
-Quiet = False

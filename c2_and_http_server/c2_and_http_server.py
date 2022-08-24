@@ -380,6 +380,8 @@ agent_name = None
 try:
     wait_for_c2_response = h.wait_for_c2(c2_task_name)
     agent_name = wait_for_c2_response['agent_info']['name']
+    agent_internal_ip = wait_for_c2_response['agent_info']['internal_ip']
+    agent_external_ip = wait_for_c2_response['agent_info']['external_ip']
     agent_exists = [agent_name, c2_task_name]
     print(f'Agent connected with name {agent_name}\n')
 except KeyboardInterrupt:
@@ -393,6 +395,8 @@ if agent_exists:
         f'\nC2 URL: {c2_listener_host}'
         f'\nC2 listener name: {c2_listener_type}'
         f'\nAgent name: {agent_name}'
+        f'\nAgent internal IP: {agent_internal_ip}'
+        f'\nAgent external IP: {agent_external_ip}'
         '\n\nPlaybook will halt until prompted to proceed with clean up.'
         )
     print('\nPress enter to proceed.')

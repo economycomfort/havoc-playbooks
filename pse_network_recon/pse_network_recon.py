@@ -57,59 +57,11 @@ else:
 
 # Verify that the C2 agent exists.
 print(f'\nVerifying that agent {c2_agent_name} exists.')
-c2_instruct_instance = ''.join(random.choice(string.ascii_letters) for i in range(6))
-c2_instruct_command = 'get_agents'
-c2_instruct_args = {'Name': c2_agent_name}
-agents_list = h.interact_with_task(c2_task_name, c2_instruct_command, c2_instruct_instance, c2_instruct_args)
-agent_exists = False
-for agent in agents_list['agents']:
-    if c2_agent_name == agent['name']:
-        agent_exists = True
-if agent_exists:
+agent = h.verify_agent(c2_task_name, c2_agent_name)
+if agent:
     print(f'Agent {c2_agent_name} exists. Continuing...\n')
 else:
-    print(f'Agent {c2_agent_name} not found. Exiting...\n')
-
-def execute_module(executing_module, module_config):
-    # Use a random string for the agent instruct_instance of each shell command.
-    module_instruct_instance = ''.join(random.choice(string.ascii_letters) for i in range(6))
-    instruct_command = 'execute_module'
-    instruct_args = {'Agent': c2_agent_name, 'Name': executing_module}
-    for k, v in module_config.items():
-        if v:
-            instruct_args[k] = v
-    module_response = h.interact_with_task(c2_task_name, instruct_command, module_instruct_instance, instruct_args)
-    if module_response['outcome'] == 'success':
-        print(f'{executing_module} started.\n')
-        module_task_id = module_response['message']['taskID']
-    else:
-        print(f'{instruct_command} failed with response:\n')
-        print(module_response)
-        module_task_id = None
-    return module_instruct_instance, module_task_id
-
-def get_module_results(executing_module, module_instruct_instance, module_task_id):
-    print(f'\nGetting results from execute_module "{executing_module}"\n')
-    results = None
-    while not results:
-        try:
-            instruct_command = 'get_shell_command_results'
-            instruct_args = {'Name': c2_agent_name}
-            module_results = h.interact_with_task(c2_task_name, instruct_command, module_instruct_instance, instruct_args)
-            if module_results['outcome'] == 'success':
-                for module_result in module_results['results']:
-                    if 'taskID' in module_result and module_result['taskID'] == module_task_id and 'results' in module_result:
-                        tmp_results = module_result['results']
-                        if tmp_results is not None and 'Job started:' not in tmp_results:
-                            results = tmp_results
-            else:
-                results = f'{instruct_command} failed.\n'
-            if not results:
-                t.sleep(10)
-        except KeyboardInterrupt:
-            exit('get_shell_command_results interrupted. Exiting...')
-    print(f'{executing_module} results:')
-    print(results)
+    exit(f'Agent {c2_agent_name} not found. Exiting...\n')
 
 # Execute the modules.
 for section in config.sections():
@@ -119,10 +71,13 @@ for section in config.sections():
             module = module_config['Module']
             del module_config['Module']
             print(f'\nTasking agent with execute_module "{module}"\n')
-            instruct_instance, task_id = execute_module(module, module_config)
-            if task_id is not None:
-                get_module_results(module, instruct_instance, task_id)
-            
+            try:
+                module_results = h.execute_agent_module(c2_task_name, c2_agent_name, module, module_config)
+                print(f'{module} results:\n')
+                print(module_results)
+            except KeyboardInterrupt:
+                print('Interrupting execute_agent_module. Skipping to next module...')
+
             # Wait for the powershell_empire task to become idle.
             print(f'\nWaiting for powershell_empire task {c2_task_name} to become idle.')
             try:

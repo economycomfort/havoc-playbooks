@@ -66,7 +66,7 @@ http_server_tls = config.get('http_service', 'tls')
 http_server_test_certificate = config.get('http_service', 'test_certificate')
 http_server_domain_name = config.get('http_service', 'domain_name')
 http_server_cert_subj = config.get('http_service', 'cert_subj')
-c2_client_ip_list = config.get('c2_client', 'client_ip').split()
+c2_client_ip_list = config.get('c2_client', 'client_ip').split(',')
 
 
 http_server_exists = None

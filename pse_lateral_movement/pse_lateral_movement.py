@@ -10,7 +10,7 @@ from configparser import ConfigParser
 # Import the havoc Python package.
 import havoc
 
-init_parser = argparse.ArgumentParser(description='havoc playbook - PowerShell Empire Lateral Movement: Invoke WMI')
+init_parser = argparse.ArgumentParser(description='havoc playbook - PowerShell Empire Lateral Movement')
 
 init_parser.add_argument('--profile', help='Use a specific profile from your credential file')
 init_args = init_parser.parse_args()
@@ -42,7 +42,7 @@ pp = pprint.PrettyPrinter(indent=4)
 # Create a config parser and setup config parameters
 config = ConfigParser(allow_no_value=True)
 config.optionxform = str
-config.read('havoc-playbooks/pse_lateral_movement_invoke_wmi/pse_lateral_movement_invoke_wmi.ini')
+config.read('havoc-playbooks/pse_lateral_movement/pse_lateral_movement.ini')
 
 c2_task_name = config.get('c2_task', 'task_name')
 c2_agent_name = config.get('c2_task', 'agent_name')

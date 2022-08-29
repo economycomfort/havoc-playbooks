@@ -17,3 +17,18 @@ Password =
 UserAgent = 
 Proxy = 
 ProxyCreds = 
+
+[invoke_psexec]
+Enable = True
+Module = powershell/lateral_movement/invoke_psexec
+ComputerName = 
+ServiceName = 
+Listener = 
+Command = 
+ResultFile = 
+Obfuscate = 
+ObfuscateCommand = 
+Bypasses = 
+UserAgent = 
+Proxy = 
+ProxyCreds = 

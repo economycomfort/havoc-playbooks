@@ -1,0 +1,34 @@
+[c2_task]
+task_name = c2-http_MM_dd_YYYY_HH_mm
+agent_name = 1w2x3y4z
+
+[invoke_wmi]
+Enable = True
+Module = powershell/lateral_movement/invoke_wmi
+CredID = 
+ComputerName = 
+Listener = 
+Command = 
+Obfuscate = 
+ObfuscateCommand = 
+Bypasses = 
+UserName = 
+Password = 
+UserAgent = 
+Proxy = 
+ProxyCreds = 
+
+[invoke_psexec]
+Enable = True
+Module = powershell/lateral_movement/invoke_psexec
+ComputerName = 
+ServiceName = 
+Listener = 
+Command = 
+ResultFile = 
+Obfuscate = 
+ObfuscateCommand = 
+Bypasses = 
+UserAgent = 
+Proxy = 
+ProxyCreds = 

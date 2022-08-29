@@ -20,22 +20,24 @@ init_args = init_parser.parse_args()
 
 profile = init_args.profile
 
-# Load the configuration file
-config = ConfigParser()
-config_file = os.path.expanduser('~/.havoc/config')
-config.read(config_file)
+# Load the ./HAVOC configuration file
+havoc_config = ConfigParser()
+havoc_config_file = os.path.expanduser('~/.havoc/config')
+havoc_config.read(havoc_config_file)
 
 # Get api_key and secret_key
 if profile:
-    api_key = config.get(profile, 'API_KEY')
-    secret = config.get(profile, 'SECRET')
-    api_region = config.get(profile, 'API_REGION')
-    api_domain_name = config.get(profile, 'API_DOMAIN_NAME')
+    api_key = havoc_config.get(profile, 'API_KEY')
+    secret = havoc_config.get(profile, 'SECRET')
+    api_region = havoc_config.get(profile, 'API_REGION')
+    api_domain_name = havoc_config.get(profile, 'API_DOMAIN_NAME')
+    campaign_admin_email = havoc_config.get(profile, 'CAMPAIGN_ADMIN_EMAIL')
 else:
-    api_key = config.get('default', 'API_KEY')
-    secret = config.get('default', 'SECRET')
-    api_region = config.get('default', 'API_REGION')
-    api_domain_name = config.get('default', 'API_DOMAIN_NAME')
+    api_key = havoc_config.get('default', 'API_KEY')
+    secret = havoc_config.get('default', 'SECRET')
+    api_region = havoc_config.get('default', 'API_REGION')
+    api_domain_name = havoc_config.get('default', 'API_DOMAIN_NAME')
+    campaign_admin_email = havoc_config.get('default', 'CAMPAIGN_ADMIN_EMAIL')
 
 h = havoc.Connect(api_region, api_domain_name, api_key, secret)
 
@@ -55,14 +57,17 @@ c2_listener_type = config.get('c2_listener', 'listener_type')
 c2_listener_profile = config.get('c2_listener', 'listener_profile')
 c2_listener_port = config.get('c2_listener', 'listener_port')
 c2_listener_tls = config.get('c2_listener', 'listener_tls')
+c2_test_certificate = config.get('c2_listener', 'test_certificate')
 c2_domain_name = config.get('c2_listener', 'domain_name')
 c2_cert_subj = config.get('c2_listener', 'cert_subj')
 c2_stager = dict(config.items('c2_stager'))
 http_server_port = config.get('http_service', 'http_port')
 http_server_tls = config.get('http_service', 'tls')
+http_server_test_certificate = config.get('http_service', 'test_certificate')
 http_server_domain_name = config.get('http_service', 'domain_name')
 http_server_cert_subj = config.get('http_service', 'cert_subj')
-c2_client_ip = config.get('c2_client', 'client_ip')
+c2_client_ip_list = config.get('c2_client', 'client_ip').split(',')
+
 
 http_server_exists = None
 c2_task_exists = None
@@ -116,16 +121,18 @@ def clean_up():
 # Create a portgroup for the HTTP server task.
 print(f'\nCreating a portgroup for the HTTP server.')
 h.create_portgroup(f'http_server_{sdate}', f'Allows port {http_server_port} traffic')
-print(f'\nAdding portgroup rule to allow C2 agent IP {c2_client_ip} to reach port {http_server_port}.\n')
-h.update_portgroup_rule(f'http_server_{sdate}', 'add', f'{c2_client_ip}/32', http_server_port, 'tcp')
-http_portgroup_exists = f'http_server_{sdate}'
+for c2_client_ip in c2_client_ip_list:
+    print(f'\nAdding portgroup rule to allow client IP {c2_client_ip} to reach port {http_server_port}.\n')
+    h.update_portgroup_rule(f'http_server_{sdate}', 'add', f'{c2_client_ip}', http_server_port, 'tcp')
+    http_portgroup_exists = f'http_server_{sdate}'
 
 # Create a portgroup for the powershell_empire task's listener.
 print(f'\nCreating a portgroup for the C2 listener.')
 h.create_portgroup(f'c2_server_{sdate}', f'Allows port {c2_listener_port} traffic')
-print(f'\nAdding portgroup rule to allow C2 agent IP {c2_client_ip} to reach the C2 listener on port {c2_listener_port}.\n')
-h.update_portgroup_rule(f'c2_server_{sdate}', 'add', f'{c2_client_ip}/32', c2_listener_port, 'tcp')
-c2_portgroup_exists = f'c2_server_{sdate}'
+for c2_client_ip in c2_client_ip_list:
+    print(f'\nAdding portgroup rule to allow client IP {c2_client_ip} to reach the C2 listener on port {c2_listener_port}.\n')
+    h.update_portgroup_rule(f'c2_server_{sdate}', 'add', f'{c2_client_ip}', c2_listener_port, 'tcp')
+    c2_portgroup_exists = f'c2_server_{sdate}'
 
 # Launch an http_server task.
 http_server_task_name = f'http_server_{sdate}'
@@ -133,7 +140,7 @@ portgroups = [f'http_server_{sdate}']
 if http_server_domain_name == 'None':
     http_server_task_host_name = 'None'
 else:
-    http_server_task_host_name = 'www'
+    http_server_task_host_name = 'downloads-' + ''.join(random.choice(string.ascii_lowercase) for i in range(5))
 print(f'\nLaunching http_server task with name {http_server_task_name}.')
 http_server_task = h.task_startup(
     http_server_task_name,
@@ -155,7 +162,7 @@ portgroups = [f'c2_server_{sdate}']
 if c2_domain_name == 'None':
     c2_task_host_name = 'None'
 else:
-    c2_task_host_name = 'c2'
+    c2_task_host_name = 'c2-' + ''.join(random.choice(string.ascii_lowercase) for i in range(5))
 print(f'\nLaunching powershell_empire task with name {c2_task_name}.')
 c2_task = h.task_startup(
     c2_task_name,
@@ -177,21 +184,42 @@ http_instruct_instance = ''.join(random.choice(string.ascii_letters) for i in ra
 # If TLS listener requested for http_server, generate a certificate.
 if http_server_tls.lower() == 'true':
     print('\nGenerating a certificate to support a TLS web service.')
-    subj = None
+    instruct_args = None
     if http_server_domain_name != 'None':
-        subj = re.sub('\$HOST', f'www.{http_server_domain_name}', http_server_cert_subj)
+        print('HTTP server domain is configured. Requesting a Let\'s Encrypt certificate...\n')
+        print('Temporarily opening port 80 for certificate request verification.\n')
+        h.update_portgroup_rule(f'http_server_{sdate}', 'add', '0.0.0.0/0', '80', 'tcp')
+        print('Starting certificate request.\n')
+        http_domain = f'{http_server_task_host_name}.{http_server_domain_name}'
+        if http_server_test_certificate.lower() == 'true':
+            http_test_cert = 'True'
+        else:
+            http_test_cert = 'False'
+        instruct_args = {'domain': http_domain, 'email': campaign_admin_email, 'test_cert': http_test_cert}
+        instruct_command = 'cert_gen'
+        cert_gen = h.interact_with_task(http_server_task_name, instruct_command, http_instruct_instance, instruct_args)
+        if cert_gen['outcome'] == 'success':
+            print('HTTP server certificate request succeeded.\n')
+            print('Closing port 80.\n')
+            h.update_portgroup_rule(f'http_server_{sdate}', 'remove', '0.0.0.0/0', '80', 'tcp')
+        else:
+            print('HTTP server certificate request failed with response:\n')
+            print(cert_gen)
+            print('\nExiting...')
+            clean_up()
     if http_server_domain_name == 'None':
-        subj = re.sub('\$HOST', f'{http_server_task_ip}', http_server_cert_subj)
-    instruct_command = 'cert_gen'
-    instruct_args = {'subj': subj}
-    cert_gen = h.interact_with_task(http_server_task_name, instruct_command, http_instruct_instance, instruct_args)
-    if cert_gen['outcome'] == 'success':
-        print('cert_gen succeeded.\n')
-    else:
-        print('cert_gen failed with response:\n')
-        print(cert_gen)
-        print('\nExiting...')
-        clean_up()
+        print('No HTTP server domain configured. Creating a self-signed certificate...\n')
+        http_subj = re.sub('\$HOST', f'{http_server_task_ip}', http_server_cert_subj)
+        instruct_args = {'subj': http_subj}
+        instruct_command = 'cert_gen'
+        cert_gen = h.interact_with_task(http_server_task_name, instruct_command, http_instruct_instance, instruct_args)
+        if cert_gen['outcome'] == 'success':
+            print('HTTP server self-signed certificate creation succeeded.\n')
+        else:
+            print('HTTP server self-signed certificate creation failed with response:\n')
+            print(cert_gen)
+            print('\nExiting...')
+            clean_up()
 
 # Ask the http_server task to start a web service.
 print(f'\nStarting a web service on {http_server_task_name}.')
@@ -213,21 +241,42 @@ c2_instruct_instance = ''.join(random.choice(string.ascii_letters) for i in rang
 # If TLS listener requested for powershell_empire listener, generate a certificate.
 if c2_listener_tls.lower() == 'true':
     print('\nGenerating a certificate to support a TLS C2 listener.')
-    subj = None
+    instruct_args = None
     if c2_domain_name != 'None':
-        subj = re.sub('\$HOST', f'{c2_task_host_name}.{c2_domain_name}', c2_cert_subj)
+        print('C2 listener domain is configured. Requesting a Let\'s Encrypt certificate...\n')
+        print('Temporarily opening port 80 for certificate request verification.\n')
+        h.update_portgroup_rule(f'c2_server_{sdate}', 'add', '0.0.0.0/0', '80', 'tcp')
+        print('Starting certificate request.\n')
+        c2_domain = f'{c2_task_host_name}.{c2_domain_name}'
+        if c2_test_certificate.lower() == 'true':
+            c2_test_cert = 'True'
+        else:
+            c2_test_cert = 'False'
+        instruct_args = {'domain': c2_domain, 'email': campaign_admin_email, 'test_cert': c2_test_cert}
+        instruct_command = 'cert_gen'
+        cert_gen = h.interact_with_task(c2_task_name, instruct_command, c2_instruct_instance, instruct_args)
+        if cert_gen['outcome'] == 'success':
+            print('Certificate request succeeded.\n')
+            print('Closing port 80.\n')
+            h.update_portgroup_rule(f'c2_server_{sdate}', 'remove', '0.0.0.0/0', '80', 'tcp')
+        else:
+            print('Certificate request failed with response:\n')
+            print(cert_gen)
+            print('\nExiting...')
+            clean_up()
     if c2_domain_name == 'None':
-        subj = re.sub('\$HOST', f'{c2_task_ip}', c2_cert_subj)
-    instruct_command = 'cert_gen'
-    instruct_args = {'subj': subj}
-    cert_gen = h.interact_with_task(c2_task_name, instruct_command, c2_instruct_instance, instruct_args)
-    if cert_gen['outcome'] == 'success':
-        print('cert_gen succeeded.\n')
-    else:
-        print('cert_gen failed with response:\n')
-        print(cert_gen)
-        print('\nExiting...')
-        clean_up()
+        print('No C2 listener domain configured. Creating a self-signed certificate...\n')
+        c2_subj = re.sub('\$HOST', f'{c2_task_ip}', c2_cert_subj)
+        instruct_args = {'subj': c2_subj}
+        instruct_command = 'cert_gen'
+        cert_gen = h.interact_with_task(c2_task_name, instruct_command, c2_instruct_instance, instruct_args)
+        if cert_gen['outcome'] == 'success':
+            print('C2 listener self-signed certificate creation succeeded.\n')
+        else:
+            print('C2 listener self-signed certificate creation failed with response:\n')
+            print(cert_gen)
+            print('\nExiting...')
+            clean_up()
 
 # Create a new listener.
 if c2_listener_profile:
@@ -324,7 +373,7 @@ else:
 if http_server_task_host_name == 'None':
     http_server_url = f'{protocol}://{http_server_task_ip}/{outfile}'
 else:
-    http_server_url = f'{protocol}://www.{http_server_domain_name}/{outfile}'
+    http_server_url = f'{protocol}://{http_server_task_host_name}.{http_server_domain_name}/{outfile}'
 print(
     f'\nWaiting for an agent connection on task {c2_task_name}.\n'
     f'\nThe agent launcher can be downloaded from the HTTP server.'
@@ -334,6 +383,13 @@ agent_name = None
 try:
     wait_for_c2_response = h.wait_for_c2(c2_task_name)
     agent_name = wait_for_c2_response['agent_info']['name']
+    agent_hostname = wait_for_c2_response['agent_info']['hostname']
+    agent_internal_ip = wait_for_c2_response['agent_info']['internal_ip']
+    agent_external_ip = wait_for_c2_response['agent_info']['external_ip']
+    agent_os_details = wait_for_c2_response['agent_info']['os_details']
+    agent_arch = wait_for_c2_response['agent_info']['architecture']
+    agent_username = wait_for_c2_response['agent_info']['username']
+    agent_high_integrity = wait_for_c2_response['agent_info']['high_integrity']
     agent_exists = [agent_name, c2_task_name]
     print(f'Agent connected with name {agent_name}\n')
 except KeyboardInterrupt:
@@ -344,8 +400,16 @@ if agent_exists:
         '\nAn agent is connected. '
         f'\nC2 task name: {c2_task_name}'
         f'\nC2 IP address: {c2_task_ip}'
-        f'\nC2 listener: {c2_listener_host}'
+        f'\nC2 URL: {c2_listener_host}'
+        f'\nC2 listener name: {c2_listener_type}'
         f'\nAgent name: {agent_name}'
+        f'\nAgent hostname: {agent_hostname}'
+        f'\nAgent internal IP: {agent_internal_ip}'
+        f'\nAgent external IP: {agent_external_ip}'
+        f'\nAgent OS details: {agent_os_details}'
+        f'\nAgent system architecture: {agent_arch}'
+        f'\nAgent username: {agent_username}'
+        f'\nAgent is high integrity (0=no, 1=yes): {agent_high_integrity}'
         '\n\nPlaybook will halt until prompted to proceed with clean up.'
         )
     print('\nPress enter to proceed.')

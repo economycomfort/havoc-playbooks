@@ -1,0 +1,27 @@
+[c2_task]
+task_name = c2-http_MM_dd_YYYY_HH_mm
+agent_name = 1w2x3y4z
+
+[antivirusproduct]
+Enable = True
+Module = powershell/situational_awareness/host/antivirusproduct
+ComputerName = 
+
+[dnsserver]
+Enable = True
+Module = powershell/situational_awareness/host/dnsserver
+
+[get_proxy]
+Enable = True
+Module = powershell/situational_awareness/host/get_proxy
+ComputerName = 
+
+[get_uaclevel]
+Enable = True
+Module = powershell/situational_awareness/host/get_uaclevel
+
+[winenum]
+Enable = True
+Module = powershell/situational_awareness/host/winenum
+Keywords = 
+UserName = 

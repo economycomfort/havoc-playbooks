@@ -26,25 +26,20 @@ CIDR =
 OutputFunction = 
 Range = 
 
-[share_finder]
+[get_domain_controller]
 Enable = True
-Module = powershell/situational_awareness/network/powerview/share_finder
-CheckShareAccess = 
-ComputerLDAPFilter = 
-ComputerName = 
-ComputerOperatingSystem = 
-ComputerSearchBase = 
-ComputerServicePack = 
-ComputerSiteName = 
-Delay = 
-Jitter = 
-OutputFunction = 
-ResultPageSize = 
-SearchScope = 
+Module = powershell/situational_awareness/network/powerview/get_domain_controller
+Domain = 
+Server = 
+LDAP = 
+
+[get_domain_policy]
+Enable = True
+Module = powershell/situational_awareness/network/powerview/get_domain_policy
+Policy = Domain
+Domain = 
 Server = 
 ServerTimeLimit = 
-Threads = 
-Tombstone = 
 
 [bloodhound]
 Enable = True
@@ -64,34 +59,6 @@ SkipGCDeconfliction =
 URI = 
 UserADSPath = 
 UserPass = 
-
-[process_hunter]
-Enable = True
-Module = powershell/situational_awareness/network/powerview/process_hunter
-ComputerName = 
-ComputerDomain = 
-ComputerLDAPFilter = 
-ComputerSearchBase = 
-ComputerUnconstrained = 
-ComputerOperatingSystem = 
-ComputerServicePack = 
-ComputerSiteName = 
-ProcessName = 
-UserGroupIdentity = 
-UserAdminCount = 
-UserIdentity = 
-UserLDAPFilter = 
-UserSearchBase = 
-StopOnSuccess = 
-Delay = 
-Domain = 
-Server = 
-SearchScope = 
-ResultPageSize = 
-ServerTimeLimit = 
-Tombstone = 
-Jitter = 
-Threads = 
 
 [user_hunter]
 Enable = True
@@ -140,33 +107,3 @@ SearchScope =
 ResultPageSize = 
 ServerTimeLimit = 
 Tombstone = 
-
-[get_domain_controller]
-Enable = True
-Module = powershell/situational_awareness/network/powerview/get_domain_controller
-Domain = 
-Server = 
-LDAP = 
-
-[get_domain_policy]
-Enable = True
-Module = powershell/situational_awareness/network/powerview/get_domain_policy
-Policy = Domain
-Domain = 
-Server = 
-ServerTimeLimit = 
-
-[get_cached_rdpconnection]
-Enable = True
-Module = powershell/situational_awareness/network/powerview/get_cached_rdpconnection
-ComputerName = 
-
-[get_loggedon]
-Enable = True
-Module = powershell/situational_awareness/network/powerview/get_loggedon
-ComputerName = 
-
-[get_session]
-Enable = True
-Module = powershell/situational_awareness/network/powerview/get_session
-ComputerName = 

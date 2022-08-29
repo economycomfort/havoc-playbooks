@@ -66,7 +66,8 @@ http_server_tls = config.get('http_service', 'tls')
 http_server_test_certificate = config.get('http_service', 'test_certificate')
 http_server_domain_name = config.get('http_service', 'domain_name')
 http_server_cert_subj = config.get('http_service', 'cert_subj')
-c2_client_ip = config.get('c2_client', 'client_ip')
+c2_client_ip_list = config.get('c2_client', 'client_ip').split()
+
 
 http_server_exists = None
 c2_task_exists = None
@@ -120,16 +121,18 @@ def clean_up():
 # Create a portgroup for the HTTP server task.
 print(f'\nCreating a portgroup for the HTTP server.')
 h.create_portgroup(f'http_server_{sdate}', f'Allows port {http_server_port} traffic')
-print(f'\nAdding portgroup rule to allow C2 agent IP {c2_client_ip} to reach port {http_server_port}.\n')
-h.update_portgroup_rule(f'http_server_{sdate}', 'add', f'{c2_client_ip}', http_server_port, 'tcp')
-http_portgroup_exists = f'http_server_{sdate}'
+for c2_client_ip in c2_client_ip_list:
+    print(f'\nAdding portgroup rule to allow client IP {c2_client_ip} to reach port {http_server_port}.\n')
+    h.update_portgroup_rule(f'http_server_{sdate}', 'add', f'{c2_client_ip}', http_server_port, 'tcp')
+    http_portgroup_exists = f'http_server_{sdate}'
 
 # Create a portgroup for the powershell_empire task's listener.
 print(f'\nCreating a portgroup for the C2 listener.')
 h.create_portgroup(f'c2_server_{sdate}', f'Allows port {c2_listener_port} traffic')
-print(f'\nAdding portgroup rule to allow C2 agent IP {c2_client_ip} to reach the C2 listener on port {c2_listener_port}.\n')
-h.update_portgroup_rule(f'c2_server_{sdate}', 'add', f'{c2_client_ip}', c2_listener_port, 'tcp')
-c2_portgroup_exists = f'c2_server_{sdate}'
+for c2_client_ip in c2_client_ip_list:
+    print(f'\nAdding portgroup rule to allow client IP {c2_client_ip} to reach the C2 listener on port {c2_listener_port}.\n')
+    h.update_portgroup_rule(f'c2_server_{sdate}', 'add', f'{c2_client_ip}', c2_listener_port, 'tcp')
+    c2_portgroup_exists = f'c2_server_{sdate}'
 
 # Launch an http_server task.
 http_server_task_name = f'http_server_{sdate}'

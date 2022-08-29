@@ -158,7 +158,7 @@ ServerTimeLimit =
 
 [get_cached_rdpconnection]
 Enable = True
-Module = powershell/situational_awareness/network/powerview/get_domain_rdpconnection
+Module = powershell/situational_awareness/network/powerview/get_cached_rdpconnection
 ComputerName = 
 
 [get_loggedon]

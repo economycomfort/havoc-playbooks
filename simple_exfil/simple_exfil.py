@@ -203,7 +203,7 @@ for command in command_list.split(', '):
     exfil_outfile_insert = re.sub('\$EXFIL_OUTFILE', exfil_outfile, command)
     exfil_type_insert = re.sub('\$EXFIL_TYPE', exfil_type, exfil_outfile_insert)
     if exfil_tls.lower() == 'true':
-        exfil_tls_insert = re.sub('\$TLS', 'S', exfil_type_insert)
+        exfil_tls_insert = re.sub('\$TLS', 's', exfil_type_insert)
     else:
         exfil_tls_insert = re.sub('\$TLS', '', exfil_type_insert)
     exfil_host_insert = re.sub('\$EXFIL_HOST', exfil_host, exfil_tls_insert)

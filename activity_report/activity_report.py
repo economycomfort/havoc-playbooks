@@ -42,6 +42,7 @@ start_time = config.get('activity_report', 'start_time')
 end_time = config.get('activity_report', 'end_time')
 
 for task in tasks:
+    task = task.strip()
     print(f'\nGetting results for task {task}\n')
     print('+------------------------------------------------------------------+')
     get_task_results = h.get_task_results(task, start_time=start_time, end_time=end_time)

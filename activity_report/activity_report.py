@@ -37,7 +37,7 @@ config = ConfigParser(allow_no_value=True)
 config.optionxform = str
 config.read('havoc-playbooks/activity_report/activity_report.ini')
 
-tasks = config.get('activity_report', 'tasks')
+tasks = config.get('activity_report', 'tasks').split(',')
 start_time = config.get('activity_report', 'start_time')
 end_time = config.get('activity_report', 'end_time')
 

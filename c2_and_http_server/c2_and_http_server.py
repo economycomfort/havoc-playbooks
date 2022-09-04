@@ -1,12 +1,12 @@
 # Import the supporting Python packages.
 import re
 import os
-import ast
 import string
 import random
 import pprint
 import argparse
 import subprocess
+import time as t
 from configparser import ConfigParser
 from datetime import datetime
 
@@ -412,9 +412,11 @@ if agent_exists:
         f'\nAgent is high integrity (0=no, 1=yes): {agent_high_integrity}'
         '\n\nPlaybook will halt until prompted to proceed with clean up.'
         )
-    print('\nPress enter to proceed.')
-    input()
+    try:
+        while True:
+            t.sleep(2)
+    except KeyboardInterrupt:
+        print('Ctrl+c detected. Proceeding with clean up...')
 
 # Playbook is complete; time to clean up.
-print('\nPlaybook operation completed. Cleaning up ./havoc resources.')
 clean_up()

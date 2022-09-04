@@ -70,9 +70,13 @@ for section in config.sections():
         if module_config['Enable'].lower() == 'true':
             module = module_config['Module']
             del module_config['Module']
+            m_config = {}
+            for k,v in module_config.items():
+                if v:
+                    m_config[k] = v
             print(f'\nTasking agent with execute_module "{module}"\n')
             try:
-                module_results = h.execute_agent_module(c2_task_name, c2_agent_name, module, module_config)
+                module_results = h.execute_agent_module(c2_task_name, c2_agent_name, module, m_config)
                 print(f'{module} results:\n')
                 print(module_results)
             except KeyboardInterrupt:

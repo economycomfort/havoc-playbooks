@@ -88,9 +88,13 @@ for section in config.sections():
         if module_config['Enable'].lower() == 'true':
             module = module_config['Module']
             del module_config['Module']
+            comp_str = None
+            if 'completion_string' in module_config:
+                comp_str = module_config['completion_string']
+                del module_config['completion_string']
             print(f'\nTasking agent with execute_module "{module}"\n')
             try:
-                module_results = h.execute_agent_module(c2_task_name, c2_agent_name, module, module_config, wait_for_results=False)
+                module_results = h.execute_agent_module(c2_task_name, c2_agent_name, module, module_config, wait_for_results=False, completion_string=comp_str)
                 print(f'{module} results:\n')
                 print(module_results)
             except KeyboardInterrupt:

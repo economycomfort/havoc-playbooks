@@ -417,7 +417,7 @@ if agent_exists:
         while True:
             t.sleep(2)
     except KeyboardInterrupt:
-        print('Ctrl+c detected. Proceeding with clean up...')
+        print('\nCtrl+c detected. Proceeding with clean up...')
 
 # Playbook is complete; time to clean up.
 clean_up()

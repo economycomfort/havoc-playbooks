@@ -141,7 +141,7 @@ for section in config.sections():
                     while True:
                         t.sleep(2)
                 except KeyboardInterrupt:
-                    print('Ctrl+c detected. Proceeding with clean up...')
+                    print('\nCtrl+c detected. Proceeding with clean up...')
                     clean_up()
 
 # Playbook is complete.

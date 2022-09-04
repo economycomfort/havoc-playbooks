@@ -135,7 +135,7 @@ for section in config.sections():
                     f'\nAgent username: {agent_username}'
                     f'\nAgent is high integrity (0=no, 1=yes): {agent_high_integrity}'
                     '\n\nPlaybook will halt until prompted to proceed with clean up.'
-                    )
+                )
                 print('\nPress Ctrl+c to proceed with clean up.')
                 try:
                     while True:

@@ -26,6 +26,25 @@ CIDR =
 OutputFunction = 
 Range = 
 
+[share_finder]
+Enable = True
+Module = powershell/situational_awareness/network/powerview/share_finder
+ComputerName = 
+ComputerLDAPFilter = 
+ComputerSearchBase = 
+ComputerOperatingSystem = 
+ComputerServicePack = 
+ComputerSiteName = 
+CheckShareAccess = 
+Server = 
+SearchScope = 
+ResultPageSize = 
+ServerTimeLimit = 
+Tombstone = 
+Delay = 
+Jitter = 
+Threads = 
+
 [get_domain_controller]
 Enable = True
 Module = powershell/situational_awareness/network/powerview/get_domain_controller

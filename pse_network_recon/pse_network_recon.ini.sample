@@ -18,7 +18,7 @@ ReadableOut =
 SkipDiscovery = 
 TopPorts = 
 XmlOut = 
-completion_string = " completed"
+completion_string = completed
 
 [reverse_dns]
 Enable = True
@@ -26,7 +26,7 @@ Module = powershell/situational_awareness/network/reverse_dns
 CIDR = 
 OutputFunction = 
 Range = 
-completion_string = " completed"
+completion_string = completed
 
 [share_finder]
 Enable = True
@@ -46,7 +46,7 @@ Tombstone =
 Delay = 
 Jitter = 
 Threads = 
-completion_string = " completed"
+completion_string = completed
 
 [get_domain_controller]
 Enable = True
@@ -54,7 +54,7 @@ Module = powershell/situational_awareness/network/powerview/get_domain_controlle
 Domain = 
 Server = 
 LDAP = 
-completion_string = " completed"
+completion_string = completed
 
 [get_domain_policy]
 Enable = True
@@ -63,7 +63,7 @@ Policy = Domain
 Domain = 
 Server = 
 ServerTimeLimit = 
-completion_string = " completed"
+completion_string = completed
 
 [bloodhound]
 Enable = True
@@ -83,4 +83,4 @@ SkipGCDeconfliction =
 URI = 
 UserADSPath = 
 UserPass = 
-completion_string = " completed"
+completion_string = completed

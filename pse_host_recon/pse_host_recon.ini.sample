@@ -6,27 +6,27 @@ agent_name = 1w2x3y4z
 Enable = True
 Module = powershell/situational_awareness/host/antivirusproduct
 ComputerName = 
-completion_string = " completed"
+completion_string = completed
 
 [dnsserver]
 Enable = True
 Module = powershell/situational_awareness/host/dnsserver
-completion_string = " completed"
+completion_string = completed
 
 [get_proxy]
 Enable = True
 Module = powershell/situational_awareness/host/get_proxy
 ComputerName = 
-completion_string = " completed"
+completion_string = completed
 
 [get_uaclevel]
 Enable = True
 Module = powershell/situational_awareness/host/get_uaclevel
-completion_string = " completed"
+completion_string = completed
 
 [winenum]
 Enable = True
 Module = powershell/situational_awareness/host/winenum
 Keywords = 
 UserName = 
-completion_string = " completed"
+completion_string = completed

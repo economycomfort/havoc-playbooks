@@ -60,8 +60,8 @@ exfil_cert_subj = config.get('exfil_task', 'cert_subj')
 c2_task_name = config.get('c2_task', 'task_name')
 c2_agent_name = config.get('c2_task', 'agent_name')
 exfil_file = config.get('exfil_actions', 'exfil_file')
-exfil_file_path = config.get('exfil_actions', 'exfil_file_path')
-exfil_file_size = config.get('exfil_actions', 'exfil_file_size')
+exfil_path = config.get('exfil_actions', 'exfil_path')
+exfil_size = config.get('exfil_actions', 'exfil_size')
 command_list = config.get('exfil_actions', 'command_list')
 
 exfil_task_exists = None
@@ -202,10 +202,10 @@ else:
 # Execute a list of shell commands on the agent.
 for command in command_list.split(', '):
     # Replace variables in shell_command
-    exfil_file_path_insert = re.sub('\$EXFIL_FILE_PATH', exfil_file_path, command)
-    exfil_file_insert = re.sub('\$EXFIL_FILE', exfil_file, exfil_file_path_insert)
-    exfil_file_size_insert = re.sub('\$EXFIL_FILE_SIZE', exfil_file_size, exfil_file_insert)
-    exfil_type_insert = re.sub('\$EXFIL_TYPE', exfil_type, exfil_file_size_insert)
+    exfil_path_insert = re.sub('\$EXFIL_PATH', exfil_path, command)
+    exfil_file_insert = re.sub('\$EXFIL_FILE', exfil_file, exfil_path_insert)
+    exfil_size_insert = re.sub('\$EXFIL_SIZE', exfil_size, exfil_file_insert)
+    exfil_type_insert = re.sub('\$EXFIL_TYPE', exfil_type, exfil_size_insert)
     if exfil_tls.lower() == 'true':
         exfil_tls_insert = re.sub('\$TLS', 's', exfil_type_insert)
     else:
@@ -231,17 +231,17 @@ for command in command_list.split(', '):
 # Confirm that exfil was successful.
 # Use a random string for the exfil_listener instruct_instance.
 confirm_exfil_instruct_instance = ''.join(random.choice(string.ascii_letters) for i in range(6))
-print(f'\nConfirming that {exfil_outfile} was successfully uploaded to {exfil_task_name}.')
+print(f'\nConfirming that {exfil_file} was successfully uploaded to {exfil_task_name}.')
 instruct_command = 'ls'
 ls_command = h.interact_with_task(exfil_task_name, instruct_command, confirm_exfil_instruct_instance)
 if ls_command['outcome'] == 'success':
     dir_contents = ls_command['local_directory_contents']
-    if exfil_outfile in dir_contents:
-        print(f'\nUpload of {exfil_outfile} succeeded.\n')
+    if exfil_file in dir_contents:
+        print(f'\nUpload of {exfil_file} succeeded.\n')
         print(f'{exfil_task_name} local directory contents:\n')
         pp.pprint(dir_contents)
     else:
-        print(f'\nUpload of {exfil_outfile} failed.\n')
+        print(f'\nUpload of {exfil_file} failed.\n')
         print(f'{exfil_task_name} local directory contents:\n')
         pp.pprint(dir_contents)
 else:

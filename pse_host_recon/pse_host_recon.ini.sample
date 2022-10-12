@@ -24,6 +24,30 @@ Enable = True
 Module = powershell/situational_awareness/host/get_uaclevel
 completion_string = completed
 
+[seatbelt-user]
+Enable = True
+Module = powershell/situational_awareness/host/seatbelt
+Command =
+Group = User
+Computername =
+Username =
+Password =
+Full = False
+Quiet =
+completion_string = Completed
+
+[seatbelt-system]
+Enable = True
+Module = powershell/situational_awareness/host/seatbelt
+Command =
+Group = System
+Computername =
+Username =
+Password =
+Full = False
+Quiet =
+completion_string = Completed
+
 [winenum]
 Enable = True
 Module = powershell/situational_awareness/host/winenum
